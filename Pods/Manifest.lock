@@ -1,0 +1,170 @@
+PODS:
+  - Alamofire (4.7.2)
+  - Bartinter (0.0.2)
+  - CountryPickerView (2.1.0)
+  - Eureka (4.1.1)
+  - FSPagerView (0.7.1)
+  - HappyDNS (0.3.14)
+  - ImageRow (3.1.0):
+    - Eureka (~> 4.0)
+  - IQKeyboardManagerSwift (6.0.3)
+  - Kingfisher (4.8.0)
+  - KMNavigationBarTransition (1.1.5)
+  - Marklight (1.4.0)
+  - moa (9.0.2)
+  - Moya (11.0.2):
+    - Moya/Core (= 11.0.2)
+  - Moya/Core (11.0.2):
+    - Alamofire (~> 4.1)
+    - Result (~> 3.0)
+  - NVActivityIndicatorView (4.2.1):
+    - NVActivityIndicatorView/Presenter (= 4.2.1)
+  - NVActivityIndicatorView/Presenter (4.2.1)
+  - ObjectMapper (3.2.0)
+  - PhoneNumberKit (2.1.0):
+    - PhoneNumberKit/PhoneNumberKitCore (= 2.1.0)
+    - PhoneNumberKit/UIKit (= 2.1.0)
+  - PhoneNumberKit/PhoneNumberKitCore (2.1.0)
+  - PhoneNumberKit/UIKit (2.1.0):
+    - PhoneNumberKit/PhoneNumberKitCore
+  - PryntTrimmerView (2.0.1)
+  - PullToRefreshKit (0.8.6)
+  - Qiniu (7.2.4):
+    - HappyDNS (~> 0.3)
+  - QuickLayout (2.0.2)
+  - RAMAnimatedTabBarController (3.2.0)
+  - Result (3.2.4)
+  - Reusable (4.0.2):
+    - Reusable/Storyboard (= 4.0.2)
+    - Reusable/View (= 4.0.2)
+  - Reusable/Storyboard (4.0.2)
+  - Reusable/View (4.0.2)
+  - ShadowView (1.2)
+  - SnapKit (4.0.0)
+  - StatusAlert (0.10.1)
+  - SteviaLayout (4.2.0)
+  - SwiftEntryKit (0.2.4):
+    - QuickLayout (= 2.0.2)
+  - swiftScan (1.1.3)
+  - SwiftyMarkdown (0.5.1)
+  - SwiftyUserDefaults (4.0.0-alpha.1)
+  - Toucan (1.0.0)
+  - TTSegmentedControl (0.4.4)
+  - URLNavigator (2.0.5)
+  - WSTagsField (3.1.0)
+  - YPImagePicker (3.1.0):
+    - PryntTrimmerView (~> 2.0)
+    - SteviaLayout (~> 4.2.0)
+
+DEPENDENCIES:
+  - Bartinter
+  - CountryPickerView (~> 2.1.0)
+  - Eureka (~> 4.1)
+  - FSPagerView
+  - ImageRow (~> 3.1)
+  - IQKeyboardManagerSwift (~> 6.0)
+  - Kingfisher
+  - KMNavigationBarTransition (~> 1.1)
+  - Marklight
+  - moa (~> 9.0)
+  - Moya (~> 11.0)
+  - NVActivityIndicatorView (~> 4.2)
+  - ObjectMapper (~> 3.2)
+  - PhoneNumberKit (~> 2.1)
+  - PullToRefreshKit
+  - Qiniu (~> 7.1)
+  - RAMAnimatedTabBarController
+  - Reusable (~> 4.0.2)
+  - ShadowView
+  - SnapKit (~> 4.0.0)
+  - StatusAlert (~> 0.10.1)
+  - SwiftEntryKit (~> 0.2)
+  - swiftScan (~> 1.1)
+  - SwiftyMarkdown
+  - SwiftyUserDefaults (= 4.0.0-alpha.1)
+  - Toucan (~> 1.0)
+  - TTSegmentedControl
+  - URLNavigator (~> 2.0.5)
+  - WSTagsField
+  - YPImagePicker
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - Alamofire
+    - Bartinter
+    - CountryPickerView
+    - Eureka
+    - FSPagerView
+    - HappyDNS
+    - ImageRow
+    - IQKeyboardManagerSwift
+    - Kingfisher
+    - KMNavigationBarTransition
+    - Marklight
+    - moa
+    - Moya
+    - NVActivityIndicatorView
+    - ObjectMapper
+    - PhoneNumberKit
+    - PryntTrimmerView
+    - PullToRefreshKit
+    - Qiniu
+    - QuickLayout
+    - RAMAnimatedTabBarController
+    - Result
+    - Reusable
+    - ShadowView
+    - SnapKit
+    - StatusAlert
+    - SteviaLayout
+    - SwiftEntryKit
+    - swiftScan
+    - SwiftyMarkdown
+    - SwiftyUserDefaults
+    - Toucan
+    - TTSegmentedControl
+    - URLNavigator
+    - WSTagsField
+    - YPImagePicker
+
+SPEC CHECKSUMS:
+  Alamofire: e4fa87002c137ba2d8d634d2c51fabcda0d5c223
+  Bartinter: 350b1d89faf569cd4c1ee8dc32465acf57eb0373
+  CountryPickerView: 25a85d08e993e2ed7d3f06d59bb66017851115ff
+  Eureka: b88fb930e42c79f8c03c373d0fcdc28c1d6c50ed
+  FSPagerView: 958aba39684e1573755ddcfcc29f7eebb8413cee
+  HappyDNS: dc6a164ee81979093123c241c6353bcf0218add6
+  ImageRow: 1ea483078bfa3d880a7fc76fdfcddfd5f29a9e6b
+  IQKeyboardManagerSwift: 04e8679f85e496bb2c474eeb9284052f1b3c391c
+  Kingfisher: 976d828df2b24834c6a3f2fc4d82cdbd26552be1
+  KMNavigationBarTransition: 7a52c9bc25b39b6e3343e980b453facee1591b82
+  Marklight: 2489d376cd3d3e7b1d109cd7d6d248fd9b8e0bee
+  moa: b73dc5e0efa1fad00711c4608e41b197f4d15b12
+  Moya: a725035953bc1c0eb1be505ab903984501d82440
+  NVActivityIndicatorView: 8068ba3ad39cb44cbaab25d89ff2546b3f092681
+  ObjectMapper: 5cccd2de6f253eda859df8116a5a554d9769e859
+  PhoneNumberKit: 62003f40ff75315fd3738286558bc365365ac222
+  PryntTrimmerView: 4260ae497a2f3e1bbfc0b71247eb74ab92bf0490
+  PullToRefreshKit: 172df52ab9c6cb2c1d4b1872b49f448d6291523f
+  Qiniu: 65384bca1cdb0480a68d9b9b8f54db53418c0355
+  QuickLayout: a730730b646b231fd4ef7cffaeb1e81fe0e1ca92
+  RAMAnimatedTabBarController: 0499157f67053a21bcccb52a25dd3c6ecdbfb4f6
+  Result: d2d07204ce72856f1fd9130bbe42c35a7b0fea10
+  Reusable: 584a5629747c52e0f6a77841b400dc2643f6fa0f
+  ShadowView: e686f2e27fc281c0118419b1fb314b6e534a4682
+  SnapKit: a42d492c16e80209130a3379f73596c3454b7694
+  StatusAlert: 123d79043ee371f0a57102b35e79e2c8c8684388
+  SteviaLayout: 0d2112caea45707695e8c718262c8ea3dd37ef17
+  SwiftEntryKit: 1a78e2434c17fcd85f003e3bbbe12287b6235e03
+  swiftScan: ad753846f4292c19a376dd159db035d62b689458
+  SwiftyMarkdown: 743af3e87931391bc4836b825fec3d98785b2e3a
+  SwiftyUserDefaults: cebe0ff9472f52699772a514b6f7155861d8069b
+  Toucan: 61867fb10948c02e9804280a95eb183e98eac97a
+  TTSegmentedControl: 7a5fc6c3e117c340106efd3a35205b987f2ba23c
+  URLNavigator: b7bdd352cc07f4f745547807a3ca2a82980a6cea
+  WSTagsField: 53055749c03769b2b297f2a629ba23a26931e3ff
+  YPImagePicker: 724a4004e62db927deaaa2371cb7bde4e3b36708
+
+PODFILE CHECKSUM: 4aed9b5b907a6e8aeff335818eb1bba45f5f152c
+
+COCOAPODS: 1.5.3
