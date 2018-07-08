@@ -8,8 +8,6 @@
 
 import UIKit
 import Reusable
-import moa
-import Toucan
 
 fileprivate let DefaultLogoHeight = 40.0
 fileprivate let DefaultPriceWidth = 80
@@ -19,8 +17,7 @@ final class TokenProductContentHeaderView: UIView, Reusable {
     
     static let height: CGFloat = 55
     
-    private let logoDownloader = Moa()
-    private let tokenLogo = UIButton(type: .custom)
+    private let tokenLogo = UIButton(frame: CGRect(x: 0, y: 0, width: DefaultLogoHeight, height: DefaultLogoHeight))
     private let priceTitleLabel = UILabel()
     private let priceLabel = UILabel()
     private let buyButton = TransitionButton()
@@ -28,7 +25,7 @@ final class TokenProductContentHeaderView: UIView, Reusable {
     override init(frame: CGRect) {
         super.init(frame: frame)
         tokenLogo.layer.borderWidth = 0
-        tokenLogo.layer.cornerRadius = CGFloat(DefaultLogoHeight / 2.0)
+        tokenLogo.layer.cornerRadius = CGFloat(DefaultLogoHeight / 2)
         tokenLogo.contentMode = .scaleAspectFill
         tokenLogo.clipsToBounds = true
         tokenLogo.addTarget(self, action: #selector(gotoToken), for: .touchUpInside)
@@ -44,6 +41,9 @@ final class TokenProductContentHeaderView: UIView, Reusable {
         priceLabel.font = MainFont.bold.with(size: 15)
         priceLabel.textColor = UIColor.primaryBlue
         priceLabel.textAlignment = .center
+        priceLabel.adjustsFontSizeToFitWidth = true
+        priceLabel.numberOfLines = 1
+        priceLabel.minimumScaleFactor = 8.0 / priceLabel.font.pointSize
         priceView.addSubview(priceLabel)
         priceLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -55,6 +55,9 @@ final class TokenProductContentHeaderView: UIView, Reusable {
         priceTitleLabel.text = "需消耗代币"
         priceTitleLabel.textColor = UIColor.primaryBlue
         priceTitleLabel.textAlignment = .center
+        priceTitleLabel.adjustsFontSizeToFitWidth = true
+        priceTitleLabel.numberOfLines = 1
+        priceTitleLabel.minimumScaleFactor = 8.0 / priceTitleLabel.font.pointSize
         priceView.addSubview(priceTitleLabel)
         
         priceTitleLabel.snp.remakeConstraints { (maker) -> Void in
@@ -102,7 +105,7 @@ final class TokenProductContentHeaderView: UIView, Reusable {
         if let logoImage = token.logoImage {
             tokenLogo.setImage(logoImage, for: .normal)
         } else if let logo = token.logo {
-            tokenLogo.kf.setImage(with: URL(string: logo), for: .normal)
+            self.tokenLogo.kf.setImage(with: URL(string: logo), for: .normal)
         }
         
         if let tokenSymbol = token.symbol {

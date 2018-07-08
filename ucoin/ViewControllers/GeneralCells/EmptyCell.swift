@@ -1,5 +1,5 @@
 //
-//  EmptyTokenDescriptionCell.swift
+//  EmptyCell.swift
 //  ucoin
 //
 //  Created by Syd on 2018/6/19.
@@ -10,7 +10,7 @@ import UIKit
 import Reusable
 import SnapKit
 
-final class EmptyTokenDescriptionCell: UITableViewCell, Reusable {
+final class EmptyCell: UITableViewCell, Reusable {
     
     weak public var delegate: TokenViewDelegate?
     private let descLabel = UILabel()

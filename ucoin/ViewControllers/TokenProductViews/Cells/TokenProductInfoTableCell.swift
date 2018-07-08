@@ -9,8 +9,11 @@
 import UIKit
 import Reusable
 
+fileprivate let DefaultSymbolWidth = 50.0
+
 final class TokenProductInfoTableCell: UITableViewCell, Reusable {
     
+    private let symbolLabel = UILabelPadding()
     private let titleLabel = UILabel()
     private let dateRangeLabel = UILabel()
     private let stackView = UIStackView()
@@ -21,6 +24,9 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         let containerView = UIView()
         
         titleLabel.font = MainFont.medium.with(size: 17)
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.numberOfLines = 1
+        titleLabel.minimumScaleFactor = 8.0 / titleLabel.font.pointSize
         containerView.addSubview(titleLabel)
         titleLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(16)
@@ -31,6 +37,9 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         
         dateRangeLabel.font = MainFont.light.with(size: 12)
         dateRangeLabel.textColor = UIColor.lightGray
+        dateRangeLabel.adjustsFontSizeToFitWidth = true
+        dateRangeLabel.numberOfLines = 1
+        dateRangeLabel.minimumScaleFactor = 8.0 / dateRangeLabel.font.pointSize
         containerView.addSubview(dateRangeLabel)
         dateRangeLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(16)
@@ -47,6 +56,9 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         totalSupplyLabel.font = MainFont.bold.with(size: 15)
         totalSupplyLabel.tintColor = UIColor.primaryBlue
         totalSupplyLabel.textAlignment = .center
+        totalSupplyLabel.adjustsFontSizeToFitWidth = true
+        totalSupplyLabel.numberOfLines = 1
+        totalSupplyLabel.minimumScaleFactor = 8.0 / totalSupplyLabel.font.pointSize
         totalSupplyView.addSubview(totalSupplyLabel)
         totalSupplyLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -70,6 +82,9 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         amountLabel.font = MainFont.bold.with(size: 15)
         amountLabel.tintColor = UIColor.primaryBlue
         amountLabel.textAlignment = .center
+        amountLabel.adjustsFontSizeToFitWidth = true
+        amountLabel.numberOfLines = 1
+        amountLabel.minimumScaleFactor = 8.0 / amountLabel.font.pointSize
         amountView.addSubview(amountLabel)
         amountLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -87,6 +102,26 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
             maker.trailing.equalToSuperview().offset(-5)
             maker.top.equalTo(amountLabel.snp.bottom).offset(5)
             maker.bottom.equalToSuperview().offset(-5)
+        }
+        
+        symbolLabel.layer.borderWidth = 0
+        symbolLabel.layer.cornerRadius = 5.0
+        symbolLabel.clipsToBounds = true
+        symbolLabel.backgroundColor = UIColor.primaryBlue
+        symbolLabel.paddingTop = 3.0
+        symbolLabel.paddingLeft = 5.0
+        symbolLabel.paddingRight = 5.0
+        symbolLabel.paddingBottom = 3.0
+        symbolLabel.textColor = .white
+        symbolLabel.font = MainFont.medium.with(size: 10)
+        symbolLabel.adjustsFontSizeToFitWidth = true
+        symbolLabel.numberOfLines = 1
+        symbolLabel.minimumScaleFactor = 8.0 / symbolLabel.font.pointSize
+        containerView.addSubview(symbolLabel)
+        symbolLabel.snp.remakeConstraints { (maker) -> Void in
+            maker.top.equalToSuperview().offset(8)
+            maker.trailing.equalToSuperview().offset(-8)
+            maker.width.lessThanOrEqualTo(DefaultSymbolWidth)
         }
         
         stackView.addArrangedSubview(totalSupplyView)
@@ -132,6 +167,14 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
             amountLabel.text = "\(product.amount ?? 0)"
         } else {
             amountLabel.text = "不限"
+        }
+        
+        guard let token = product.token else {
+            return
+        }
+        
+        if let tokenSymbol = token.symbol {
+            symbolLabel.text = tokenSymbol
         }
     }
 }

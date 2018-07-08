@@ -69,7 +69,7 @@ class TokenProductViewController: UITableViewController {
         self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
         self.navigationController?.navigationBar.shadowImage = UIImage()
         self.navigationItem.title = "代币权益"
-        self.extendedLayoutIncludesOpaqueBars = true
+        //self.extendedLayoutIncludesOpaqueBars = true
         
         if let userInfo: DefaultsUser = Defaults[.user] {
             self.userInfo = APIUser.init(user: userInfo)
@@ -85,16 +85,16 @@ class TokenProductViewController: UITableViewController {
         self.segmentControl.frame = CGRect(x: 0, y: 0, width: tableView.bounds.size.width, height:TokenSegmentView.height)
         self.segmentControl.delegate = self
         
-        self.tableView.addSubview(spinner)
-        if self.productAddress != "" && self.tokenProduct == nil {
-            self.spinner.start()
-        }
-        
         self.setupTableView()
         
         self.setupPullRefresh()
         
         self.onSegmentControlUpdated()
+        
+        self.tableView.addSubview(spinner)
+        if self.productAddress != "" && self.tokenProduct == nil {
+            self.spinner.start()
+        }
         
         self.refresh(true)
     }
@@ -107,7 +107,6 @@ class TokenProductViewController: UITableViewController {
         }
         self.navigationController?.navigationBar.isTranslucent = false
         self.navigationController?.setNavigationBarHidden(false, animated: animated)
-        self.tableView.contentOffset = CGPoint(x: 0, y: 0)
         self.tableView.reloadDataWithAutoSizingCellWorkAround()
     }
     
@@ -122,7 +121,7 @@ class TokenProductViewController: UITableViewController {
     }
     
     private func setupTableView() {
-        self.tableView.register(cellType: EmptyTokenDescriptionCell.self)
+        self.tableView.register(cellType: EmptyCell.self)
         self.tableView.register(cellType: TokenProductInfoTableCell.self)
         self.tableView.register(cellType: TokenProductContentTableCell.self)
         self.tableView.register(cellType: TokenProductOrderSimpleCell.self)
@@ -307,8 +306,8 @@ extension TokenProductViewController {
         case "entities":
             if self.currentSegment == 0 {
                 if self.orders.count == 0 {
-                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyTokenDescriptionCell
-                    cell.fill("还没人下单哦", isLoading: false)
+                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
+                    cell.fill("还没人下单哦", isLoading: self.isLoadingOrders)
                     return cell
                 }
                 let cell = tableView.dequeueReusableCell(for: indexPath) as TokenProductOrderSimpleCell
@@ -316,12 +315,12 @@ extension TokenProductViewController {
                 return cell
             } else if self.currentSegment == 1 {
                 if self.comments.count == 0 {
-                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyTokenDescriptionCell
-                    cell.fill("还没有评论哦", isLoading: false)
+                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
+                    cell.fill("还没有评论哦", isLoading: isLoadingComments)
                     return cell
                 }
             }
-            let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyTokenDescriptionCell
+            let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
             cell.fill("该代币还没有描述", isLoading: false)
             return cell
         default:

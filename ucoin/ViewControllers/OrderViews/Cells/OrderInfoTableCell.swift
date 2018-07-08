@@ -8,10 +8,9 @@
 
 import UIKit
 import Reusable
-import moa
-import Toucan
 
-fileprivate let DefaultLogoHeight = 40.0
+fileprivate let DefaultLogoHeight = 50.0
+fileprivate let DefaultSymbolWidth = 50.0
 
 final class OrderInfoTableCell: UITableViewCell, Reusable {
     weak public var delegate: OrderViewDelegate?
@@ -22,8 +21,8 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
     private let idLabel = UILabel()
     private let createDateLabel = UILabel()
     
-    private let logoDownloader = Moa()
-    private let tokenLogo = UIButton(type: .custom)
+    private let tokenLogo = UIButton(frame: CGRect(x: 0, y: 0, width: DefaultLogoHeight, height: DefaultLogoHeight))
+    private let symbolLabel = UILabelPadding()
     private let priceTitleLabel = UILabel()
     private let priceLabel = UILabel()
     
@@ -31,16 +30,15 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
         let containerView = UIView()
         
         let titleView = UIView()
-        
         tokenLogo.layer.borderWidth = 0
         tokenLogo.layer.cornerRadius = CGFloat(DefaultLogoHeight / 2.0)
         tokenLogo.contentMode = .scaleAspectFill
         tokenLogo.clipsToBounds = true
-        tokenLogo.frame = CGRect(x: 0, y: 0, width: DefaultLogoHeight, height: DefaultLogoHeight)
         tokenLogo.addTarget(self, action: #selector(gotoToken), for: .touchUpInside)
         titleView.addSubview(tokenLogo)
         tokenLogo.snp.remakeConstraints { (maker) -> Void in
-            maker.centerY.equalToSuperview()
+            maker.top.equalToSuperview().offset(8)
+            maker.bottom.equalToSuperview().offset(-8)
             maker.leading.equalToSuperview()
             maker.width.equalTo(DefaultLogoHeight)
             maker.height.equalTo(DefaultLogoHeight)
@@ -60,12 +58,14 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
         
         dateRangeLabel.font = MainFont.light.with(size: 12)
         dateRangeLabel.textColor = UIColor.lightGray
+        dateRangeLabel.adjustsFontSizeToFitWidth = true
+        dateRangeLabel.numberOfLines = 1
+        dateRangeLabel.minimumScaleFactor = 8.0 / dateRangeLabel.font.pointSize
         titleView.addSubview(dateRangeLabel)
         dateRangeLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalTo(titleLabel.snp.leading)
             maker.trailing.equalToSuperview()
             maker.top.equalTo(titleLabel.snp.bottom).offset(8)
-            maker.bottom.equalToSuperview().offset(-8)
         }
         
         containerView.addSubview(titleView)
@@ -73,6 +73,26 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
             maker.top.equalToSuperview()
             maker.leading.equalToSuperview().offset(16)
             maker.trailing.equalToSuperview().offset(-16)
+        }
+        
+        symbolLabel.layer.borderWidth = 0
+        symbolLabel.layer.cornerRadius = 5.0
+        symbolLabel.clipsToBounds = true
+        symbolLabel.backgroundColor = UIColor.primaryBlue
+        symbolLabel.paddingTop = 3.0
+        symbolLabel.paddingLeft = 5.0
+        symbolLabel.paddingRight = 5.0
+        symbolLabel.paddingBottom = 3.0
+        symbolLabel.textColor = .white
+        symbolLabel.font = MainFont.medium.with(size: 10)
+        symbolLabel.adjustsFontSizeToFitWidth = true
+        symbolLabel.numberOfLines = 1
+        symbolLabel.minimumScaleFactor = 8.0 / symbolLabel.font.pointSize
+        containerView.addSubview(symbolLabel)
+        symbolLabel.snp.remakeConstraints { (maker) -> Void in
+            maker.top.equalToSuperview().offset(8)
+            maker.trailing.equalToSuperview().offset(-8)
+            maker.width.lessThanOrEqualTo(DefaultSymbolWidth)
         }
         
         stackView.axis = .horizontal
@@ -84,6 +104,9 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
         idLabel.font = MainFont.bold.with(size: 15)
         idLabel.tintColor = UIColor.primaryBlue
         idLabel.textAlignment = .center
+        idLabel.adjustsFontSizeToFitWidth = true
+        idLabel.numberOfLines = 1
+        idLabel.minimumScaleFactor = 8.0 / idLabel.font.pointSize
         idView.addSubview(idLabel)
         idLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -107,6 +130,9 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
         priceLabel.font = MainFont.bold.with(size: 15)
         priceLabel.textColor = UIColor.primaryBlue
         priceLabel.textAlignment = .center
+        priceLabel.adjustsFontSizeToFitWidth = true
+        priceLabel.numberOfLines = 1
+        priceLabel.minimumScaleFactor = 8.0 / priceLabel.font.pointSize
         priceView.addSubview(priceLabel)
         priceLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -118,6 +144,9 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
         priceTitleLabel.text = "花费"
         priceTitleLabel.textColor = UIColor.primaryBlue
         priceTitleLabel.textAlignment = .center
+        priceTitleLabel.adjustsFontSizeToFitWidth = true
+        priceTitleLabel.numberOfLines = 1
+        priceTitleLabel.minimumScaleFactor = 8.0 / priceTitleLabel.font.pointSize
         priceView.addSubview(priceTitleLabel)
         
         priceTitleLabel.snp.remakeConstraints { (maker) -> Void in
@@ -131,6 +160,9 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
         createDateLabel.font = MainFont.bold.with(size: 15)
         createDateLabel.tintColor = UIColor.primaryBlue
         createDateLabel.textAlignment = .center
+        createDateLabel.adjustsFontSizeToFitWidth = true
+        createDateLabel.numberOfLines = 1
+        createDateLabel.minimumScaleFactor = 8.0 / createDateLabel.font.pointSize
         createDateView.addSubview(createDateLabel)
         createDateLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -196,11 +228,12 @@ final class OrderInfoTableCell: UITableViewCell, Reusable {
         if let logoImage = token.logoImage {
             tokenLogo.setImage(logoImage, for: .normal)
         } else if let logo = token.logo {
-            tokenLogo.kf.setImage(with: URL(string: logo), for: .normal)
+            self.tokenLogo.kf.setImage(with: URL(string: logo), for: .normal)
         }
         
         if let tokenSymbol = token.symbol {
             priceTitleLabel.text = "花费\(tokenSymbol)"
+            symbolLabel.text = tokenSymbol
         }
         if let price = order.price {
             let numberFormatter = NumberFormatter()

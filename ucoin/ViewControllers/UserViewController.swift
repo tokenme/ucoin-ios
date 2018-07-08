@@ -121,8 +121,8 @@ class UserViewController: UITableViewController {
         }
     }
     
-    public func refresh() {
-        self.getUserInfo(true)
+    public func refresh(_ refreshUser: Bool = true) {
+        self.getUserInfo(refreshUser)
         self.getOwnedTokens()
     }
     
@@ -338,7 +338,7 @@ extension UserViewController: UIViewControllerTransitioningDelegate {
 
 extension UserViewController: LoginViewDelegate {
     func loginSucceeded(token: APIAccessToken) {
-        self.getUserInfo(false)
+        self.refresh(false)
     }
 }
 

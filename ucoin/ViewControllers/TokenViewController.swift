@@ -129,7 +129,7 @@ class TokenViewController: UIViewController {
         
         self.tableView.register(cellType: TokenStatsTableCell.self)
         self.tableView.register(cellType: TokenDescriptionCell.self)
-        self.tableView.register(cellType: EmptyTokenDescriptionCell.self)
+        self.tableView.register(cellType: EmptyCell.self)
         self.tableView.register(cellType: EmptyTokenOwnedDescriptionCell.self)
         self.tableView.register(cellType: EmptyTokenOwnedProductCell.self)
         self.tableView.register(cellType: EmptyTokenOwnedTaskCell.self)
@@ -386,7 +386,7 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
                         cell.delegate = self
                         return cell
                     }
-                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyTokenDescriptionCell
+                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
                     cell.fill("该代币还没有声明权益", isLoading: self.isLoadingProducts)
                     return cell
                 }
@@ -401,7 +401,7 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
                         cell.delegate = self
                         return cell
                     }
-                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyTokenDescriptionCell
+                    let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
                     cell.fill("还没有设置获取代币任务", isLoading: self.isLoadingProducts)
                     return cell
                 }
@@ -420,7 +420,7 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
                 cell.delegate = self
                 return cell
             } else {
-                let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyTokenDescriptionCell
+                let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
                 cell.fill("该代币还没有描述", isLoading: false)
                 return cell
             }

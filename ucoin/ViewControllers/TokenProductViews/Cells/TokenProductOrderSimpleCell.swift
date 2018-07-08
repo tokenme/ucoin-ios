@@ -10,9 +10,12 @@ import UIKit
 import Reusable
 
 fileprivate let DefaultIndicatorHeight = 5.0
+fileprivate let DefaultAvatarWidth = 35.0
 
 final class TokenProductOrderSimpleCell: UITableViewCell, Reusable {
     
+    private let avatarView = UIImageView(frame: CGRect(x: 0, y: 0, width: DefaultAvatarWidth, height: DefaultAvatarWidth))
+    private let nickLabel = UILabel()
     private let idLabel = UILabel()
     private let txLabel = UILabel()
     private let dateLabel = UILabel()
@@ -21,31 +24,63 @@ final class TokenProductOrderSimpleCell: UITableViewCell, Reusable {
     private lazy var containerView: UIView = {
         let containerView = UIView()
         
+        let userView = UIView()
+        avatarView.clipsToBounds = true
+        avatarView.layer.borderWidth = 0
+        avatarView.layer.cornerRadius = CGFloat(DefaultAvatarWidth / 2.0)
+        userView.addSubview(avatarView)
+        avatarView.snp.remakeConstraints { (maker) -> Void in
+            maker.centerY.equalToSuperview()
+            maker.width.equalTo(DefaultAvatarWidth)
+            maker.height.equalTo(DefaultAvatarWidth)
+            maker.leading.equalToSuperview()
+        }
         idLabel.font = MainFont.medium.with(size: 17)
         idLabel.adjustsFontSizeToFitWidth = true
         idLabel.numberOfLines = 1
-        idLabel.minimumScaleFactor = 8.0 / txLabel.font.pointSize
-        containerView.addSubview(idLabel)
+        idLabel.minimumScaleFactor = 8.0 / idLabel.font.pointSize
+        userView.addSubview(idLabel)
         idLabel.snp.remakeConstraints { (maker) -> Void in
-            maker.leading.equalToSuperview().offset(16)
-            maker.trailing.equalToSuperview().offset(-16)
+            maker.leading.equalTo(avatarView.snp.trailing).offset(16)
+            maker.trailing.equalToSuperview()
             maker.top.equalToSuperview().offset(8)
         }
         
-        txLabel.font = MainFont.medium.with(size: 10)
+        nickLabel.font = MainFont.thin.with(size: 11)
+        nickLabel.adjustsFontSizeToFitWidth = true
+        nickLabel.numberOfLines = 1
+        nickLabel.minimumScaleFactor = 8.0 / nickLabel.font.pointSize
+        userView.addSubview(nickLabel)
+        nickLabel.snp.remakeConstraints { (maker) -> Void in
+            maker.leading.equalTo(idLabel.snp.leading)
+            maker.trailing.equalToSuperview()
+            maker.top.equalTo(idLabel.snp.bottom).offset(4)
+            maker.bottom.equalToSuperview().offset(-8)
+        }
+        
+        containerView.addSubview(userView)
+        userView.snp.remakeConstraints { (maker) -> Void in
+            maker.leading.equalToSuperview().offset(16)
+            maker.trailing.equalToSuperview().offset(-16)
+            maker.top.equalToSuperview().offset(16)
+        }
+        
+        
+        txLabel.font = MainFont.light.with(size: 10)
         txLabel.adjustsFontSizeToFitWidth = true
         txLabel.numberOfLines = 1
         txLabel.minimumScaleFactor = 8.0 / txLabel.font.pointSize
         containerView.addSubview(txLabel)
         txLabel.snp.remakeConstraints { (maker) -> Void in
-            maker.leading.equalToSuperview().offset(16)
+            maker.leading.equalTo(userView.snp.leading)
             maker.trailing.equalToSuperview().offset(-16)
-            maker.top.equalTo(idLabel.snp.bottom).offset(8)
+            maker.top.equalTo(userView.snp.bottom).offset(8)
         }
+        
         indicator.frame = CGRect(x: 0.0, y: 0.0, width: Double(UIScreen.main.bounds.width), height: DefaultIndicatorHeight)
         containerView.addSubview(indicator)
         indicator.snp.remakeConstraints { (maker) -> Void in
-            maker.leading.equalToSuperview().offset(16)
+            maker.leading.equalTo(idLabel.snp.leading)
             maker.trailing.equalToSuperview().offset(-16)
             maker.top.equalTo(txLabel.snp.bottom).offset(8)
             maker.height.equalTo(DefaultIndicatorHeight)
@@ -54,6 +89,9 @@ final class TokenProductOrderSimpleCell: UITableViewCell, Reusable {
         dateLabel.font = MainFont.light.with(size: 12)
         dateLabel.textColor = UIColor.lightGray
         dateLabel.textAlignment = .right
+        dateLabel.adjustsFontSizeToFitWidth = true
+        dateLabel.numberOfLines = 1
+        dateLabel.minimumScaleFactor = 8.0 / dateLabel.font.pointSize
         containerView.addSubview(dateLabel)
         dateLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(16)
@@ -84,20 +122,25 @@ final class TokenProductOrderSimpleCell: UITableViewCell, Reusable {
             txLabel.text = tx
         }
         
+        if let buyer = order.buyer {
+            if let avatar = buyer.avatar {
+                avatarView.kf.setImage(with: URL(string: avatar))
+            }
+            nickLabel.text = buyer.showName
+        }
+        
         if order.productTxStatus == 1 {
             DispatchQueue.main.async {[weak self] in
                 guard let weakSelf = self else {
                     return
                 }
                 weakSelf.indicator.stopAnimating()
-                weakSelf.indicator.snp.remakeConstraints {[weak weakSelf] (maker) -> Void in
-                    guard let weakSelf2 = weakSelf else {
-                        return
-                    }
+                weakSelf.indicator.isHidden = true
+                weakSelf.dateLabel.snp.remakeConstraints { (maker) -> Void in
                     maker.leading.equalToSuperview().offset(16)
                     maker.trailing.equalToSuperview().offset(-16)
-                    maker.top.equalTo(weakSelf2.txLabel.snp.bottom).offset(8)
-                    maker.height.equalTo(0)
+                    maker.top.equalTo(weakSelf.indicator.snp.bottom).offset(8)
+                    maker.bottom.equalToSuperview().offset(-8)
                 }
             }
         } else {
@@ -106,14 +149,12 @@ final class TokenProductOrderSimpleCell: UITableViewCell, Reusable {
                     return
                 }
                 weakSelf.indicator.startAnimating()
-                weakSelf.indicator.snp.remakeConstraints {[weak weakSelf] (maker) -> Void in
-                    guard let weakSelf2 = weakSelf else {
-                        return
-                    }
+                weakSelf.indicator.isHidden = false
+                weakSelf.dateLabel.snp.remakeConstraints { (maker) -> Void in
                     maker.leading.equalToSuperview().offset(16)
                     maker.trailing.equalToSuperview().offset(-16)
-                    maker.top.equalTo(weakSelf2.txLabel.snp.bottom).offset(8)
-                    maker.height.equalTo(DefaultIndicatorHeight)
+                    maker.top.equalTo(weakSelf.txLabel.snp.bottom).offset(8)
+                    maker.bottom.equalToSuperview().offset(-8)
                 }
             }
         }

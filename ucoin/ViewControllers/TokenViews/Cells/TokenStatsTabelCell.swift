@@ -26,6 +26,9 @@ final class TokenStatsTableCell: UITableViewCell, Reusable {
         totalSupplyNumberLabel.font = MainFont.bold.with(size: 17)
         totalSupplyNumberLabel.tintColor = UIColor.primaryBlue
         totalSupplyNumberLabel.textAlignment = .center
+        totalSupplyNumberLabel.adjustsFontSizeToFitWidth = true
+        totalSupplyNumberLabel.numberOfLines = 1
+        totalSupplyNumberLabel.minimumScaleFactor = 8.0 / totalSupplyNumberLabel.font.pointSize
         totalSupplyView.addSubview(totalSupplyNumberLabel)
         totalSupplyNumberLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -49,6 +52,9 @@ final class TokenStatsTableCell: UITableViewCell, Reusable {
         totalTransfersNumberLabel.font = MainFont.bold.with(size: 17)
         totalTransfersNumberLabel.tintColor = UIColor.primaryBlue
         totalTransfersNumberLabel.textAlignment = .center
+        totalTransfersNumberLabel.adjustsFontSizeToFitWidth = true
+        totalTransfersNumberLabel.numberOfLines = 1
+        totalTransfersNumberLabel.minimumScaleFactor = 8.0 / totalTransfersNumberLabel.font.pointSize
         totalTransfersView.addSubview(totalTransfersNumberLabel)
         totalTransfersNumberLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -72,6 +78,9 @@ final class TokenStatsTableCell: UITableViewCell, Reusable {
         totalHoldersNumberLabel.font = MainFont.bold.with(size: 17)
         totalHoldersNumberLabel.tintColor = UIColor.primaryBlue
         totalHoldersNumberLabel.textAlignment = .center
+        totalHoldersNumberLabel.adjustsFontSizeToFitWidth = true
+        totalHoldersNumberLabel.numberOfLines = 1
+        totalHoldersNumberLabel.minimumScaleFactor = 8.0 / totalHoldersNumberLabel.font.pointSize
         totalHoldersView.addSubview(totalHoldersNumberLabel)
         totalHoldersNumberLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -95,6 +104,9 @@ final class TokenStatsTableCell: UITableViewCell, Reusable {
         circulatingSupplyNumberLabel.font = MainFont.bold.with(size: 17)
         circulatingSupplyNumberLabel.tintColor = UIColor.primaryBlue
         circulatingSupplyNumberLabel.textAlignment = .center
+        circulatingSupplyNumberLabel.adjustsFontSizeToFitWidth = true
+        circulatingSupplyNumberLabel.numberOfLines = 1
+        circulatingSupplyNumberLabel.minimumScaleFactor = 8.0 / circulatingSupplyNumberLabel.font.pointSize
         circulatingSupplyView.addSubview(circulatingSupplyNumberLabel)
         circulatingSupplyNumberLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)

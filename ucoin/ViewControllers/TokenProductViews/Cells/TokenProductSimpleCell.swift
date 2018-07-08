@@ -28,6 +28,9 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         let containerView = UIView()
         
         titleLabel.font = MainFont.medium.with(size: 17)
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.numberOfLines = 1
+        titleLabel.minimumScaleFactor = 8.0 / titleLabel.font.pointSize
         containerView.addSubview(titleLabel)
         titleLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(8)
@@ -38,6 +41,9 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         
         dateRangeLabel.font = MainFont.light.with(size: 12)
         dateRangeLabel.textColor = UIColor.lightGray
+        dateRangeLabel.adjustsFontSizeToFitWidth = true
+        dateRangeLabel.numberOfLines = 1
+        dateRangeLabel.minimumScaleFactor = 8.0 / dateRangeLabel.font.pointSize
         containerView.addSubview(dateRangeLabel)
         dateRangeLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -54,6 +60,9 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         priceLabel.font = MainFont.bold.with(size: 15)
         priceLabel.tintColor = UIColor.primaryBlue
         priceLabel.textAlignment = .center
+        priceLabel.adjustsFontSizeToFitWidth = true
+        priceLabel.numberOfLines = 1
+        priceLabel.minimumScaleFactor = 8.0 / priceLabel.font.pointSize
         priceView.addSubview(priceLabel)
         priceLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -64,6 +73,9 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         priceTitleLabel.font = MainFont.light.with(size: 12)
         priceTitleLabel.text = "消耗代币"
         priceTitleLabel.textAlignment = .center
+        priceTitleLabel.adjustsFontSizeToFitWidth = true
+        priceTitleLabel.numberOfLines = 1
+        priceTitleLabel.minimumScaleFactor = 8.0 / priceTitleLabel.font.pointSize
         priceView.addSubview(priceTitleLabel)
         
         priceTitleLabel.snp.remakeConstraints { (maker) -> Void in
@@ -77,6 +89,9 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         amountLabel.font = MainFont.bold.with(size: 15)
         amountLabel.tintColor = UIColor.primaryBlue
         amountLabel.textAlignment = .center
+        amountLabel.adjustsFontSizeToFitWidth = true
+        amountLabel.numberOfLines = 1
+        amountLabel.minimumScaleFactor = 8.0 / amountLabel.font.pointSize
         amountView.addSubview(amountLabel)
         amountLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -101,6 +116,9 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         totalSupplyLabel.font = MainFont.bold.with(size: 15)
         totalSupplyLabel.tintColor = UIColor.primaryBlue
         totalSupplyLabel.textAlignment = .center
+        totalSupplyLabel.adjustsFontSizeToFitWidth = true
+        totalSupplyLabel.numberOfLines = 1
+        totalSupplyLabel.minimumScaleFactor = 8.0 / totalSupplyLabel.font.pointSize
         totalSupplyView.addSubview(totalSupplyLabel)
         totalSupplyLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)

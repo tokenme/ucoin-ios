@@ -35,6 +35,9 @@ final class TokenTaskSimpleCell: UITableViewCell, Reusable {
         let containerView = UIView()
         
         titleLabel.font = MainFont.medium.with(size: 17)
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.numberOfLines = 1
+        titleLabel.minimumScaleFactor = 8.0 / titleLabel.font.pointSize
         containerView.addSubview(titleLabel)
         titleLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(8)
@@ -44,6 +47,9 @@ final class TokenTaskSimpleCell: UITableViewCell, Reusable {
         
         dateRangeLabel.font = MainFont.light.with(size: 12)
         dateRangeLabel.textColor = UIColor.lightGray
+        dateRangeLabel.adjustsFontSizeToFitWidth = true
+        dateRangeLabel.numberOfLines = 1
+        dateRangeLabel.minimumScaleFactor = 8.0 / dateRangeLabel.font.pointSize
         containerView.addSubview(dateRangeLabel)
         dateRangeLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -59,6 +65,9 @@ final class TokenTaskSimpleCell: UITableViewCell, Reusable {
         bonusLabel.font = MainFont.bold.with(size: 15)
         bonusLabel.tintColor = UIColor.primaryBlue
         bonusLabel.textAlignment = .center
+        bonusLabel.adjustsFontSizeToFitWidth = true
+        bonusLabel.numberOfLines = 1
+        bonusLabel.minimumScaleFactor = 8.0 / bonusLabel.font.pointSize
         bonusView.addSubview(bonusLabel)
         bonusLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)
@@ -83,6 +92,9 @@ final class TokenTaskSimpleCell: UITableViewCell, Reusable {
         amountLabel.font = MainFont.bold.with(size: 15)
         amountLabel.tintColor = UIColor.primaryBlue
         amountLabel.textAlignment = .center
+        amountLabel.adjustsFontSizeToFitWidth = true
+        amountLabel.numberOfLines = 1
+        amountLabel.minimumScaleFactor = 8.0 / amountLabel.font.pointSize
         amountView.addSubview(amountLabel)
         amountLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(5)

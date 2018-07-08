@@ -105,7 +105,7 @@ class TokenTaskViewController: UITableViewController {
     }
     
     private func setupTableView() {
-        self.tableView.register(cellType: EmptyTokenDescriptionCell.self)
+        self.tableView.register(cellType: EmptyCell.self)
         self.tableView.register(cellType: TokenTaskInfoTableCell.self)
         self.tableView.separatorInset = UIEdgeInsetsMake(0, 0, 0, 0)
         self.tableView.estimatedRowHeight = 44.0
@@ -224,7 +224,7 @@ extension TokenTaskViewController {
             cell.fill(self.tokenTask)
             return cell
         case "comments":
-            let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyTokenDescriptionCell
+            let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
             cell.fill("该代币还没有描述", isLoading: false)
             return cell
         default:

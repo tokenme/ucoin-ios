@@ -11,8 +11,8 @@ import ObjectMapper
 
 public class APIOrder: APIResponse {
     var tokenId: UInt64?
-    var buyer: String?
-    var seller: String?
+    var buyer: APIUser?
+    var seller: APIUser?
     var product: APITokenProduct?
     var price: UInt64?
     var tx: String?
@@ -54,7 +54,7 @@ public class APIOrder: APIResponse {
         if wallet == nil {
             return false
         }
-        return buyer == wallet
+        return buyer.wallet == wallet
     }
     
     public func isSelledByUser(wallet: String?) -> Bool {
@@ -64,6 +64,6 @@ public class APIOrder: APIResponse {
         if wallet == nil {
             return false
         }
-        return seller == wallet
+        return seller.wallet == wallet
     }
 }
