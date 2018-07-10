@@ -15,12 +15,15 @@ import swiftScan
 fileprivate let DefaultPageSize: UInt = 10
 fileprivate let DefaultFabHeight = 40.0
 
-class OrderViewController: UITableViewController {
+class OrderViewController: UIViewController {
     
-    fileprivate var userInfo: APIUser?
-    fileprivate var orderInfo: APIOrder?
-    fileprivate var sectionsMap = ["info", "qrcode"]
-    fileprivate let spinner = LoaderModal(backgroundColor: UIColor.white)!
+    private var userInfo: APIUser?
+    private var orderInfo: APIOrder?
+    
+    private let tableView = UITableView(frame: CGRect.zero, style: UITableViewStyle.plain)
+    
+    private var sectionsMap = ["info", "qrcode"]
+    private let spinner = LoaderModal(backgroundColor: UIColor.white)!
     
     private var orderServiceProvider = MoyaProvider<UCOrderService>(plugins: [networkActivityPlugin, AccessTokenPlugin(tokenClosure: AccessTokenClosure())])
     
@@ -41,9 +44,22 @@ class OrderViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.transitioningDelegate = self
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        
+        if let navigationController = self.navigationController {
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            
+            let size = navigationController.navigationBar.frame.size
+            UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.main.scale)
+            let context = UIGraphicsGetCurrentContext()
+            UIColor.dimmedLightBackground.setFill()
+            context?.addRect(CGRect(x: 0, y: 0, width: size.width, height: 1))
+            context?.drawPath(using: .fill)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            navigationController.navigationBar.shadowImage = image
+        }
+        
         self.navigationItem.title = "订单详情"
         
         self.extendedLayoutIncludesOpaqueBars = true
@@ -56,12 +72,6 @@ class OrderViewController: UITableViewController {
             return
         }
         
-        self.tableView.addSubview(spinner)
-        
-        if orderInfo.product!.token == nil {
-            self.spinner.start()
-        }
-        
         self.setupTableView()
         
         self.setupPullRefresh()
@@ -69,17 +79,27 @@ class OrderViewController: UITableViewController {
             self.tableView.reloadDataWithAutoSizingCellWorkAround()
         }
         
+        self.view.addSubview(spinner)
+        
+        if orderInfo.product!.token == nil {
+            self.spinner.start()
+        }
+        
         self.refresh()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if #available(iOS 11.0, *) {
-            self.navigationController?.navigationBar.prefersLargeTitles = false
-            self.navigationItem.largeTitleDisplayMode = .automatic;
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
         }
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        
     }
     
     override func didReceiveMemoryWarning() {
@@ -93,6 +113,15 @@ class OrderViewController: UITableViewController {
     }
     
     private func setupTableView() {
+        self.view.addSubview(tableView)
+        self.tableView.snp.remakeConstraints { (maker) -> Void in
+            maker.leading.equalToSuperview()
+            maker.trailing.equalToSuperview()
+            maker.top.equalToSuperview()
+            maker.bottom.equalToSuperview()
+        }
+        self.tableView.delegate = self
+        self.tableView.dataSource = self
         self.tableView.register(cellType: OrderQrcodeTableCell.self)
         self.tableView.register(cellType: OrderInfoTableCell.self)
         self.tableView.separatorInset = UIEdgeInsetsMake(0, 0, 0, 0)
@@ -147,21 +176,21 @@ extension OrderViewController: UIViewControllerTransitioningDelegate {
     
 }
 
-extension OrderViewController {
+extension OrderViewController: UITableViewDelegate, UITableViewDataSource {
     
-    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 0
     }
     
-    override func numberOfSections(in tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.sectionsMap.count
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch self.sectionsMap[indexPath.row] {
         case "info":
             let cell = tableView.dequeueReusableCell(for: indexPath) as OrderInfoTableCell
@@ -177,14 +206,14 @@ extension OrderViewController {
         }
     }
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         switch self.sectionsMap[indexPath.row] {
         case "info":
             guard let product = self.orderInfo?.product else {
                 return
             }
             let vc = TokenProductViewController.instantiate()
-            vc.setProductAddress(product.address)
+            vc.setProduct(product)
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
             }
@@ -193,7 +222,7 @@ extension OrderViewController {
         }
     }
     
-    override func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
+    func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
         return true
     }
 }
@@ -233,8 +262,8 @@ extension OrderViewController: OrderViewDelegate {
         let tokenVC = TokenViewController.instantiate()
         if tokenAddress != nil {
             tokenVC.setTokenAddress(tokenAddress)
-        } else if let tokenAddress = self.orderInfo?.product?.token?.address {
-            tokenVC.setTokenAddress(tokenAddress)
+        } else if let token = self.orderInfo?.product?.token {
+            tokenVC.setToken(token)
         } else {
             return
         }

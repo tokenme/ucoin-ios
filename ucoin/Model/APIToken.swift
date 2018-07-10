@@ -129,7 +129,7 @@ public class APIToken: APIResponse {
         decimals <- map["decimals"]
         initialSupply <- map["initial_supply"]
         totalSupply <- map["total_supply"]
-        circulatingSupply <- map["circulatingSupply"]
+        circulatingSupply <- map["circulating_supply"]
         totalHolders <- map["total_holders"]
         totalTransfers <- map["total_transfers"]
         txStatus <- map["tx_status"]

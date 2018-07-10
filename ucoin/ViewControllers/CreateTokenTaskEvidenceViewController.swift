@@ -1,8 +1,8 @@
 //
-//  CreateTokenProductViewController.swift
+//  CreateTokenTaskEvidenceViewController.swift
 //  ucoin
 //
-//  Created by Syd on 2018/6/20.
+//  Created by Syd on 2018/7/9.
 //  Copyright © 2018年 ucoin.io. All rights reserved.
 //
 
@@ -12,20 +12,17 @@ import SnapKit
 import Eureka
 import Toucan
 import Moya
-import WSTagsField
 import YPImagePicker
 import Qiniu
 
 fileprivate let DefaultImageWidth = 320
 
-class CreateTokenProductViewController: FormViewController {
-    weak public var delegate: CreateTokenProductDelegate?
+class CreateTokenTaskEvidenceViewController: FormViewController {
     
-    weak public var tokenInfo: APIToken?
+    weak public var tokenTask: APITokenTask?
     
     fileprivate var submitting: Bool = false
     fileprivate var imagesUploaded: Bool = false
-    fileprivate let tagsField = WSTagsField()
     fileprivate var imageGridView = FTImageGridView()
     fileprivate var imageGridHeight: NSLayoutConstraint?
     fileprivate var pickedImages: [UIImage] = []{
@@ -52,7 +49,7 @@ class CreateTokenProductViewController: FormViewController {
     
     fileprivate let spinner = LoaderModal(backgroundColor: UIColor(displayP3Red: 255, green: 255, blue: 255, alpha: 0.6))!
     
-    private var tokenProductServiceProvider = MoyaProvider<UCTokenProductService>(plugins: [networkActivityPlugin, AccessTokenPlugin(tokenClosure: AccessTokenClosure())])
+    private var tokenTaskEvidenceServiceProvider = MoyaProvider<UCTokenTaskEvidenceService>(plugins: [networkActivityPlugin, AccessTokenPlugin(tokenClosure: AccessTokenClosure())])
     private var qiniuServiceProvider = MoyaProvider<UCQiniuService>(plugins: [networkActivityPlugin, AccessTokenPlugin(tokenClosure: AccessTokenClosure())])
     
     private var completeUploadTasks: Int = 0
@@ -75,50 +72,22 @@ class CreateTokenProductViewController: FormViewController {
             navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
             navigationController.navigationBar.shadowImage = UIImage()
         }
-        guard let tokenInfo = self.tokenInfo else {
+        guard let task = self.tokenTask else {
             return
         }
+        guard let token = task.token else {
+            return
+        }
+        self.navigationItem.title = "提交\(token.symbol ?? "")代币任务证明"
         
-        self.navigationItem.title = "新建\(tokenInfo.symbol ?? "")代币权益"
-        
-        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(createTokenProduct))
+        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(createTokenTaskEvidence))
         self.navigationItem.rightBarButtonItem = saveButton
         
         self.view.addSubview(spinner)
         
-        tagsField.cornerRadius = 5.0
-        //tagsField.spaceBetweenLines = 10
-        //tagsField.spaceBetweenTags = 10
-        
-        tagsField.layoutMargins = UIEdgeInsets(top: 2, left: 6, bottom: 2, right: 6)
-        tagsField.contentInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        
-        tagsField.placeholder = "添加标签"
-        tagsField.placeholderColor = .primaryBlue
-        tagsField.placeholderAlwaysVisible = true
-        tagsField.backgroundColor = .clear
-        tagsField.returnKeyType = .next
-        tagsField.delimiter = ","
-        tagsField.acceptTagOption = .space
-        
-        let tagsViewWrapper = UIView()
-        tagsViewWrapper.addSubview(tagsField)
-        tagsField.snp.remakeConstraints { (maker) -> Void in
-            maker.leading.equalToSuperview().offset(8)
-            maker.trailing.equalToSuperview().offset(-8)
-            maker.top.equalToSuperview().offset(8)
-            maker.bottom.equalToSuperview().offset(-8)
-        }
-        
         let imageGridViewWrapper = UIView()
         
         imageGridViewWrapper.addSubview(self.imageGridView)
-        
-        TextRow.defaultCellUpdate = { cell, row in
-            if !row.isValid {
-                cell.titleLabel?.textColor = .red
-            }
-        }
         
         TextAreaRow.defaultCellUpdate = { cell, row in
             if !row.isValid {
@@ -126,67 +95,8 @@ class CreateTokenProductViewController: FormViewController {
             }
         }
         
-        IntRow.defaultCellUpdate = { cell, row in
-            if !row.isValid {
-                cell.titleLabel?.textColor = .red
-            }
-        }
-        
-        DateRow.defaultRowInitializer = { row in row.minimumDate = Date() }
-        
-        var minAmount: Double = 0
-        var maxAmount: Double = 0
-        if let decimals = tokenInfo.decimals {
-            minAmount = pow(10, -1 * Double(decimals))
-            if let totalSupply = tokenInfo.totalSupply {
-                maxAmount = Double(totalSupply) * minAmount
-            }
-        }
-        
         form +++
             Section()
-            <<< TextRow() {
-                $0.tag = "title"
-                $0.title = "标题"
-                $0.placeholder = ""
-                $0.add(rule: RuleRequired())
-                $0.add(rule: RuleMinLength(minLength: 2))
-                $0.add(rule: RuleMaxLength(maxLength: 16))
-                $0.validationOptions = .validatesOnChange
-            }
-            <<< DecimalRow(){
-                $0.tag = "price"
-                $0.title = "消耗代币数"
-                $0.value = 1.0
-                $0.formatter = DecimalFormatter()
-                $0.useFormatterDuringInput = true
-                $0.add(rule: RuleGreaterOrEqualThan(min: minAmount))
-                $0.add(rule: RuleSmallerOrEqualThan(max: maxAmount))
-                $0.validationOptions = .validatesOnChange
-            }.cellSetup { cell, _  in
-                cell.textField.keyboardType = .numberPad
-            }
-            <<< IntRow() {
-                $0.tag = "amount"
-                $0.title = "限制人数"
-                $0.value = 0
-                $0.add(rule: RuleGreaterOrEqualThan(min: 0))
-                $0.add(rule: RuleSmallerOrEqualThan(max: 50000))
-                $0.validationOptions = .validatesOnChange
-            }
-            +++ Section()
-            <<< DateRow() {
-                $0.tag = "startDate"
-                $0.value = Date()
-                $0.title = "开始日期"
-            }
-            
-            <<< DateRow() {
-                $0.tag = "endDate"
-                $0.value = Date()
-                $0.title = "结束日期"
-            }
-            
             <<< ButtonRow() {(row: ButtonRow) -> Void in
                 row.title = "选择图片"
                 }
@@ -203,22 +113,14 @@ class CreateTokenProductViewController: FormViewController {
                     cell.view = imageGridViewWrapper
             }
             
-            <<< ViewRow<UIView>() { (row) in
-                row.tag = "tags"
-                }.cellSetup {(cell, _) in
-                    cell.view = tagsViewWrapper
-            }
-            
             <<< TextAreaRow() {
                 $0.tag = "desc"
-                $0.placeholder = "权益描述"
+                $0.placeholder = "说明"
                 $0.textAreaHeight = .dynamic(initialTextViewHeight: 110)
                 $0.add(rule: RuleRequired())
-            }
+        }
         
         tableView.tableFooterView = UIView()
-        
-        tagsFieldEvents()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -229,14 +131,14 @@ class CreateTokenProductViewController: FormViewController {
         }
     }
     
-    static func instantiate() -> CreateTokenProductViewController
+    static func instantiate() -> CreateTokenTaskEvidenceViewController
     {
-        return UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "CreateTokenProductViewController") as! CreateTokenProductViewController
+        return UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "CreateTokenTaskEvidenceViewController") as! CreateTokenTaskEvidenceViewController
     }
 }
 
-extension CreateTokenProductViewController {
-    @objc private func createTokenProduct() {
+extension CreateTokenTaskEvidenceViewController {
+    @objc private func createTokenTaskEvidence() {
         if self.submitting {
             return
         }
@@ -244,23 +146,19 @@ extension CreateTokenProductViewController {
             return
         }
         let values = self.form.values()
-        guard let tokenInfo = self.tokenInfo else {
+        guard let task = self.tokenTask else {
             return
         }
-        var tags: [String] = []
-        for tag in self.tagsField.tags {
-            tags.append(tag.text)
-        }
         
-        guard let tokenProduct = APITokenProduct(form: values, token: tokenInfo, tags: tags, images: self.pickedImages) else {
+        guard let evidence = APITokenTaskEvidence(form: values, task: task, images: self.pickedImages) else {
             return
         }
         
         self.submitting = true
         self.spinner.start()
         if self.pickedImages.count > 0 {
-            UCQiniuService.getTokenProduct(
-                tokenInfo.address!,
+            UCQiniuService.getTokenTaskEvidence(
+                task.id!,
                 self.pickedImages.count,
                 provider: self.qiniuServiceProvider,
                 success: {[weak self] upTokens in
@@ -281,8 +179,8 @@ extension CreateTokenProductViewController {
                                     images.append(link)
                                 }
                             }
-                            tokenProduct.images = images
-                            weakSelfSub.doCreateTokenProduct(tokenProduct)
+                            evidence.images = images
+                            weakSelfSub.doCreateTokenTaskEvidence(evidence)
                         })
                     }
                 },
@@ -301,7 +199,7 @@ extension CreateTokenProductViewController {
                     weakSelf.submitting = false
             })
         } else {
-            self.doCreateTokenProduct(tokenProduct)
+            self.doCreateTokenTaskEvidence(evidence)
         }
     }
     
@@ -328,32 +226,32 @@ extension CreateTokenProductViewController {
                 }
             }, option: nil)
     }
-
-    private func doCreateTokenProduct(_ tokenProduct: APITokenProduct) {
-        UCTokenProductService.createTokenProduct(
-            tokenProduct,
-            provider: self.tokenProductServiceProvider,
-            success: {[weak self] product in
+    
+    private func doCreateTokenTaskEvidence(_ evidence: APITokenTaskEvidence) {
+        UCTokenTaskEvidenceService.createEvidence(
+            evidence,
+            provider: self.tokenTaskEvidenceServiceProvider,
+            success: {[weak self] evidence in
                 guard let weakSelf = self else {
                     return
                 }
                 DispatchQueue.main.async {
-                    weakSelf.delegate?.tokenProductCreated(product: product)
+                    UCAlert.showAlert(imageName: "Success", title: "提交成功", desc: "请耐心等待项目方处理", closeBtn: "关闭")
                     weakSelf.navigationController?.popViewController(animated: true)
                 }
             },
-            failed: {error in
+            failed: { error in
                 DispatchQueue.main.async {
                     UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
                 }
-            },complete: {[weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.completeUploadTasks = 0
-                weakSelf.imagesUploaded = false
-                weakSelf.submitting = false
-                weakSelf.spinner.stop()
+        },complete: {[weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.completeUploadTasks = 0
+            weakSelf.imagesUploaded = false
+            weakSelf.submitting = false
+            weakSelf.spinner.stop()
         })
     }
     
@@ -411,7 +309,6 @@ extension CreateTokenProductViewController {
                 resources.append(resource)
             }
             weakSelf.imageGridView.showWithImageArray(resources) { (buttonsArray, buttonIndex) in
-                // preview images with one line of code
                 FTImageViewer.showImages(pickedImages, atIndex: buttonIndex, fromSenderArray: buttonsArray)
             }
             DispatchQueue.main.async {
@@ -421,23 +318,4 @@ extension CreateTokenProductViewController {
         }
         self.present(picker, animated: true, completion: nil)
     }
-}
-
-extension CreateTokenProductViewController {
-    
-    fileprivate func tagsFieldEvents() {
-        tagsField.onDidChangeHeightTo = {[weak self] _, height in
-            guard let weakSelf = self else {
-                return
-            }
-            DispatchQueue.main.async {
-                weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
-            }
-        }
-    }
-    
-}
-
-public protocol CreateTokenProductDelegate: NSObjectProtocol {
-    func tokenProductCreated(product: APITokenProduct)
 }

@@ -49,8 +49,7 @@
 		1D68E3D320E9F905006D0670 /* CreateTokenTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3D220E9F905006D0670 /* CreateTokenTaskViewController.swift */; };
 		1D68E3D720E9FFA1006D0670 /* TokenTaskSimpleCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3D620E9FFA1006D0670 /* TokenTaskSimpleCell.swift */; };
 		1D68E3D920EA15AA006D0670 /* TokenTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3D820EA15AA006D0670 /* TokenTaskViewController.swift */; };
-		1D68E3DB20EA1E33006D0670 /* TokenTaskInfoHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3DA20EA1E33006D0670 /* TokenTaskInfoHeaderCell.swift */; };
-		1D68E3DD20EA22D9006D0670 /* TokenTaskInfoTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3DC20EA22D9006D0670 /* TokenTaskInfoTableCell.swift */; };
+		1D68E3DD20EA22D9006D0670 /* TokenTaskContentTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3DC20EA22D9006D0670 /* TokenTaskContentTableCell.swift */; };
 		1D68E3DF20EA2EF7006D0670 /* TokenProductViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3DE20EA2EF7006D0670 /* TokenProductViewController.swift */; };
 		1D68E3E120EA325D006D0670 /* TokenProductInfoTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3E020EA325D006D0670 /* TokenProductInfoTableCell.swift */; };
 		1D68E3E320EA3322006D0670 /* TokenProductContentTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D68E3E220EA3322006D0670 /* TokenProductContentTableCell.swift */; };
@@ -105,6 +104,16 @@
 		1DAA178A20CD66CB006EE954 /* UIButton+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DAA178920CD66CB006EE954 /* UIButton+Utils.swift */; };
 		1DAA178C20CD6B2F006EE954 /* CreateTokenViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DAA178B20CD6B2F006EE954 /* CreateTokenViewController.swift */; };
 		1DB48F6120F2439200A86C01 /* UILabelPadding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6020F2439200A86C01 /* UILabelPadding.swift */; };
+		1DB48F6320F3799200A86C01 /* TokenTaskInfoTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6220F3799200A86C01 /* TokenTaskInfoTableCell.swift */; };
+		1DB48F6520F37D3900A86C01 /* TokenTaskViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6420F37D3900A86C01 /* TokenTaskViewDelegate.swift */; };
+		1DB48F6720F3865D00A86C01 /* CreateTokenTaskEvidenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6620F3865D00A86C01 /* CreateTokenTaskEvidenceViewController.swift */; };
+		1DB48F6920F3880000A86C01 /* APITokenTaskEvidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6820F3880000A86C01 /* APITokenTaskEvidence.swift */; };
+		1DB48F6B20F38A3600A86C01 /* UCTokenTaskEvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6A20F38A3600A86C01 /* UCTokenTaskEvidenceService.swift */; };
+		1DB48F6D20F46BC200A86C01 /* TokenTaskEvidencesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6C20F46BC200A86C01 /* TokenTaskEvidencesViewController.swift */; };
+		1DB48F7020F46F1300A86C01 /* TokenTaskEvidenceSegmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F6F20F46F1300A86C01 /* TokenTaskEvidenceSegmentView.swift */; };
+		1DB48F7220F46F5400A86C01 /* TokenTaskEvidencesViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F7120F46F5400A86C01 /* TokenTaskEvidencesViewDelegate.swift */; };
+		1DB48F7420F47C5700A86C01 /* TokenTaskEvidencesTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F7320F47C5700A86C01 /* TokenTaskEvidencesTableViewController.swift */; };
+		1DB48F7720F4818200A86C01 /* TokenTaskEvidenceTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB48F7620F4818200A86C01 /* TokenTaskEvidenceTableCell.swift */; };
 		1DBCE06420C90A9D00F80C35 /* UserHeaderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DBCE06320C90A9D00F80C35 /* UserHeaderViewController.swift */; };
 		1DBCE06E20C919B300F80C35 /* APIUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DBCE06D20C919B300F80C35 /* APIUser.swift */; };
 		1DC048F620C161A400D4679E /* UCAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC048F520C161A400D4679E /* UCAuthService.swift */; };
@@ -165,8 +174,7 @@
 		1D68E3D220E9F905006D0670 /* CreateTokenTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateTokenTaskViewController.swift; sourceTree = "<group>"; };
 		1D68E3D620E9FFA1006D0670 /* TokenTaskSimpleCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskSimpleCell.swift; sourceTree = "<group>"; };
 		1D68E3D820EA15AA006D0670 /* TokenTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskViewController.swift; sourceTree = "<group>"; };
-		1D68E3DA20EA1E33006D0670 /* TokenTaskInfoHeaderCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskInfoHeaderCell.swift; sourceTree = "<group>"; };
-		1D68E3DC20EA22D9006D0670 /* TokenTaskInfoTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskInfoTableCell.swift; sourceTree = "<group>"; };
+		1D68E3DC20EA22D9006D0670 /* TokenTaskContentTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskContentTableCell.swift; sourceTree = "<group>"; };
 		1D68E3DE20EA2EF7006D0670 /* TokenProductViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenProductViewController.swift; sourceTree = "<group>"; };
 		1D68E3E020EA325D006D0670 /* TokenProductInfoTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenProductInfoTableCell.swift; sourceTree = "<group>"; };
 		1D68E3E220EA3322006D0670 /* TokenProductContentTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenProductContentTableCell.swift; sourceTree = "<group>"; };
@@ -223,6 +231,16 @@
 		1DAA178920CD66CB006EE954 /* UIButton+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIButton+Utils.swift"; sourceTree = "<group>"; };
 		1DAA178B20CD6B2F006EE954 /* CreateTokenViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateTokenViewController.swift; sourceTree = "<group>"; };
 		1DB48F6020F2439200A86C01 /* UILabelPadding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILabelPadding.swift; sourceTree = "<group>"; };
+		1DB48F6220F3799200A86C01 /* TokenTaskInfoTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskInfoTableCell.swift; sourceTree = "<group>"; };
+		1DB48F6420F37D3900A86C01 /* TokenTaskViewDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskViewDelegate.swift; sourceTree = "<group>"; };
+		1DB48F6620F3865D00A86C01 /* CreateTokenTaskEvidenceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateTokenTaskEvidenceViewController.swift; sourceTree = "<group>"; };
+		1DB48F6820F3880000A86C01 /* APITokenTaskEvidence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APITokenTaskEvidence.swift; sourceTree = "<group>"; };
+		1DB48F6A20F38A3600A86C01 /* UCTokenTaskEvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UCTokenTaskEvidenceService.swift; sourceTree = "<group>"; };
+		1DB48F6C20F46BC200A86C01 /* TokenTaskEvidencesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskEvidencesViewController.swift; sourceTree = "<group>"; };
+		1DB48F6F20F46F1300A86C01 /* TokenTaskEvidenceSegmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskEvidenceSegmentView.swift; sourceTree = "<group>"; };
+		1DB48F7120F46F5400A86C01 /* TokenTaskEvidencesViewDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskEvidencesViewDelegate.swift; sourceTree = "<group>"; };
+		1DB48F7320F47C5700A86C01 /* TokenTaskEvidencesTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskEvidencesTableViewController.swift; sourceTree = "<group>"; };
+		1DB48F7620F4818200A86C01 /* TokenTaskEvidenceTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenTaskEvidenceTableCell.swift; sourceTree = "<group>"; };
 		1DBCE06320C90A9D00F80C35 /* UserHeaderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserHeaderViewController.swift; sourceTree = "<group>"; };
 		1DBCE06D20C919B300F80C35 /* APIUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIUser.swift; sourceTree = "<group>"; };
 		1DC048F520C161A400D4679E /* UCAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UCAuthService.swift; sourceTree = "<group>"; };
@@ -262,12 +280,15 @@
 				1D68E3E420EB6376006D0670 /* EditTokenProductViewController.swift */,
 				1D68E3E720EB7C71006D0670 /* EditTokenTaskViewController.swift */,
 				1D68E3D220E9F905006D0670 /* CreateTokenTaskViewController.swift */,
+				1DB48F6620F3865D00A86C01 /* CreateTokenTaskEvidenceViewController.swift */,
 				1D491F5B20BFE6FB00AF24D0 /* RegisterViewController.swift */,
 				1D0FD9BF20C6A57C00E683AF /* UserViewController.swift */,
 				1D47000120D394980016BC70 /* TokenViewController.swift */,
 				1D68E3D820EA15AA006D0670 /* TokenTaskViewController.swift */,
 				1D68E3DE20EA2EF7006D0670 /* TokenProductViewController.swift */,
 				1DA6F55020EF63DA00215A18 /* OrderViewController.swift */,
+				1DB48F6C20F46BC200A86C01 /* TokenTaskEvidencesViewController.swift */,
+				1DB48F6E20F46EF400A86C01 /* EvidenceViews */,
 				1DA6F55220EF696000215A18 /* OrderViews */,
 				1D68E3D420E9FF7F006D0670 /* TokenTaskViews */,
 				1D68E3C420E24E0D006D0670 /* TokenProductViews */,
@@ -390,6 +411,7 @@
 		1D68E3D420E9FF7F006D0670 /* TokenTaskViews */ = {
 			isa = PBXGroup;
 			children = (
+				1DB48F6420F37D3900A86C01 /* TokenTaskViewDelegate.swift */,
 				1D68E3D520E9FF8D006D0670 /* Cells */,
 			);
 			path = TokenTaskViews;
@@ -399,8 +421,8 @@
 			isa = PBXGroup;
 			children = (
 				1D68E3D620E9FFA1006D0670 /* TokenTaskSimpleCell.swift */,
-				1D68E3DA20EA1E33006D0670 /* TokenTaskInfoHeaderCell.swift */,
-				1D68E3DC20EA22D9006D0670 /* TokenTaskInfoTableCell.swift */,
+				1D68E3DC20EA22D9006D0670 /* TokenTaskContentTableCell.swift */,
+				1DB48F6220F3799200A86C01 /* TokenTaskInfoTableCell.swift */,
 			);
 			path = Cells;
 			sourceTree = "<group>";
@@ -433,8 +455,8 @@
 		1DA6F55220EF696000215A18 /* OrderViews */ = {
 			isa = PBXGroup;
 			children = (
-				1DA6F55320EF696A00215A18 /* Cells */,
 				1DA6F55620EF6D0B00215A18 /* OrderViewDelegate.swift */,
+				1DA6F55320EF696A00215A18 /* Cells */,
 			);
 			path = OrderViews;
 			sourceTree = "<group>";
@@ -552,6 +574,25 @@
 			path = ucoin;
 			sourceTree = "<group>";
 		};
+		1DB48F6E20F46EF400A86C01 /* EvidenceViews */ = {
+			isa = PBXGroup;
+			children = (
+				1DB48F6F20F46F1300A86C01 /* TokenTaskEvidenceSegmentView.swift */,
+				1DB48F7320F47C5700A86C01 /* TokenTaskEvidencesTableViewController.swift */,
+				1DB48F7120F46F5400A86C01 /* TokenTaskEvidencesViewDelegate.swift */,
+				1DB48F7520F4816600A86C01 /* Cells */,
+			);
+			path = EvidenceViews;
+			sourceTree = "<group>";
+		};
+		1DB48F7520F4816600A86C01 /* Cells */ = {
+			isa = PBXGroup;
+			children = (
+				1DB48F7620F4818200A86C01 /* TokenTaskEvidenceTableCell.swift */,
+			);
+			path = Cells;
+			sourceTree = "<group>";
+		};
 		1DBCE06020C90A7000F80C35 /* UserViews */ = {
 			isa = PBXGroup;
 			children = (
@@ -572,6 +613,7 @@
 				1D68E39120DD1B16006D0670 /* UCTokenProductService.swift */,
 				1D68E3F120EE184C006D0670 /* UCOrderService.swift */,
 				1D68E3D020E9F80E006D0670 /* UCTokenTaskService.swift */,
+				1DB48F6A20F38A3600A86C01 /* UCTokenTaskEvidenceService.swift */,
 				1D68E39520E1103E006D0670 /* UCQiniuService.swift */,
 				1DC048F920C4F74900D4679E /* UCBaseService.swift */,
 				1D47000620D39B400016BC70 /* UCError.swift */,
@@ -611,6 +653,7 @@
 				1D68E3EF20EE1596006D0670 /* APIOrder.swift */,
 				1DA6F55820EF84E200215A18 /* APIQrcode.swift */,
 				1D68E3CE20E9F7B4006D0670 /* APITokenTask.swift */,
+				1DB48F6820F3880000A86C01 /* APITokenTaskEvidence.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -820,6 +863,7 @@
 				1DC0491620C547C700D4679E /* UIScreen+Utils.swift in Sources */,
 				1DA6F57520EF939100215A18 /* Edge.swift in Sources */,
 				1DC0491820C5482C00D4679E /* CGRect+Utils.swift in Sources */,
+				1DB48F6720F3865D00A86C01 /* CreateTokenTaskEvidenceViewController.swift in Sources */,
 				1DA74C5720BE9757004C7EF1 /* SecondViewController.swift in Sources */,
 				1D61D92320C673F00014793D /* Moya+ObjectMapper.swift in Sources */,
 				1DA6F55B20EF893300215A18 /* OrderQrcodeTableCell.swift in Sources */,
@@ -830,6 +874,7 @@
 				1D68E3E520EB6376006D0670 /* EditTokenProductViewController.swift in Sources */,
 				1DA6F57020EF939100215A18 /* Foundation+Extensions.swift in Sources */,
 				1D9B2A1A20CE6146000C366A /* UserActionsTableCell.swift in Sources */,
+				1DB48F6320F3799200A86C01 /* TokenTaskInfoTableCell.swift in Sources */,
 				1D68E3EC20EDDF74006D0670 /* TokenProductContentHeaderView.swift in Sources */,
 				1DAA178C20CD6B2F006EE954 /* CreateTokenViewController.swift in Sources */,
 				1DBCE06420C90A9D00F80C35 /* UserHeaderViewController.swift in Sources */,
@@ -849,6 +894,8 @@
 				1D68E37C20DA463B006D0670 /* TokenSegmentView.swift in Sources */,
 				1DA6F57620EF939100215A18 /* DelaunaySwift.swift in Sources */,
 				1D78FFB020BFDE7800B69615 /* SpinerLayer.swift in Sources */,
+				1DB48F7020F46F1300A86C01 /* TokenTaskEvidenceSegmentView.swift in Sources */,
+				1DB48F6920F3880000A86C01 /* APITokenTaskEvidence.swift in Sources */,
 				1D3ACE6E20D255CB007C15F8 /* SimpleHeaderView.swift in Sources */,
 				1DA6F56E20EF939100215A18 /* VerticesGenerator.swift in Sources */,
 				1DC0491A20C6509600D4679E /* UCUserService.swift in Sources */,
@@ -861,13 +908,16 @@
 				1D68E38620DA60A7006D0670 /* CreateTokenProductViewController.swift in Sources */,
 				1D47000C20D8DD650016BC70 /* TokenStatsTabelCell.swift in Sources */,
 				1D47000720D39B400016BC70 /* UCError.swift in Sources */,
+				1DB48F6B20F38A3600A86C01 /* UCTokenTaskEvidenceService.swift in Sources */,
 				1D61D92720C68E9D0014793D /* DefaultKeys.swift in Sources */,
 				1D78FFB220BFDE7800B69615 /* FadeTransition.swift in Sources */,
 				1D61D92520C6824E0014793D /* APIAccessToken.swift in Sources */,
 				1D78FFBF20BFE00B00B69615 /* FontAnimation.swift in Sources */,
+				1DB48F7420F47C5700A86C01 /* TokenTaskEvidencesTableViewController.swift in Sources */,
+				1DB48F7720F4818200A86C01 /* TokenTaskEvidenceTableCell.swift in Sources */,
 				1D68E36F20D8FF7B006D0670 /* EmptyCell.swift in Sources */,
 				1D68E39620E1103E006D0670 /* UCQiniuService.swift in Sources */,
-				1D68E3DB20EA1E33006D0670 /* TokenTaskInfoHeaderCell.swift in Sources */,
+				1DB48F6D20F46BC200A86C01 /* TokenTaskEvidencesViewController.swift in Sources */,
 				1D68E39020DD1893006D0670 /* APITokenProduct.swift in Sources */,
 				1DA74C5320BE9757004C7EF1 /* AppDelegate.swift in Sources */,
 				1D68E3DF20EA2EF7006D0670 /* TokenProductViewController.swift in Sources */,
@@ -882,7 +932,7 @@
 				1D78FFBB20BFE00B00B69615 /* TweePlaceholderTextField.swift in Sources */,
 				1DC0491020C53E3100D4679E /* Font.swift in Sources */,
 				1D68E3D320E9F905006D0670 /* CreateTokenTaskViewController.swift in Sources */,
-				1D68E3DD20EA22D9006D0670 /* TokenTaskInfoTableCell.swift in Sources */,
+				1D68E3DD20EA22D9006D0670 /* TokenTaskContentTableCell.swift in Sources */,
 				1D68E37A20DA26ED006D0670 /* ShowTokenDescriptionViewController.swift in Sources */,
 				1D78FFBC20BFE00B00B69615 /* TweeBorderedTextField.swift in Sources */,
 				1D68E38A20DA7F7E006D0670 /* FTImageViewer.swift in Sources */,
@@ -891,6 +941,7 @@
 				1D68E3CF20E9F7B4006D0670 /* APITokenTask.swift in Sources */,
 				1D0FD9C020C6A57C00E683AF /* UserViewController.swift in Sources */,
 				1D68E3F020EE1596006D0670 /* APIOrder.swift in Sources */,
+				1DB48F7220F46F5400A86C01 /* TokenTaskEvidencesViewDelegate.swift in Sources */,
 				1D9B2A2820CFBBE6000C366A /* APIToken.swift in Sources */,
 				1D68E38220DA5CC4006D0670 /* EmptyTokenOwnedProductCell.swift in Sources */,
 				1D47000520D396B00016BC70 /* TokenHeaderViewController.swift in Sources */,
@@ -917,6 +968,7 @@
 				1DA6F57720EF939100215A18 /* Vertex.swift in Sources */,
 				1D68E3D920EA15AA006D0670 /* TokenTaskViewController.swift in Sources */,
 				1D68E37120D8FFD7006D0670 /* TokenViewDelegate.swift in Sources */,
+				1DB48F6520F37D3900A86C01 /* TokenTaskViewDelegate.swift in Sources */,
 				1D68E39220DD1B16006D0670 /* UCTokenProductService.swift in Sources */,
 				1D68E3EE20EDF201006D0670 /* TokenProductViewDelegate.swift in Sources */,
 				1D9B2A1C20CE72ED000C366A /* UITableView+Utils.swift in Sources */,

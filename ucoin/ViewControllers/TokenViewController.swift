@@ -17,9 +17,9 @@ fileprivate let DefaultFabHeight = 40.0
 
 class TokenViewController: UIViewController {
     
-    fileprivate var userInfo: APIUser?
-    fileprivate var tokenAddress: String?
-    fileprivate var tokenInfo: APIToken?
+    private var userInfo: APIUser?
+    private var tokenAddress: String?
+    private var tokenInfo: APIToken?
     fileprivate var sectionsMap: [String] = ["stats", "entities"]
     fileprivate let segmentControl = TokenSegmentView()
     fileprivate var currentSegment: Int = 0
@@ -61,6 +61,12 @@ class TokenViewController: UIViewController {
         self.tokenInfo = token
         self.tokenHeaderViewController.delegate = self
         self.tokenHeaderViewController.setToken(self.tokenInfo)
+        if token?.totalSupply == nil {
+            guard let address = token?.address else {
+                return
+            }
+            self.getToken(address)
+        }
     }
     
     //=============
@@ -477,15 +483,31 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
             return
         }
         statusBarUpdater?.refreshStatusBarStyle()
-        if scrollView.contentOffset.y >= 70 && !navigationController.isNavigationBarHidden {
-            navigationController.setNavigationBarHidden(true, animated: true)
+        if scrollView.contentOffset.y >= 118 && navigationItem.title == nil {
+            navigationItem.title = self.tokenInfo?.name
+            navigationController.navigationBar.tintColor = UIColor.primaryBlue
+            navigationController.navigationBar.isTranslucent = false
+            
+            let size = navigationController.navigationBar.frame.size
+            UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.main.scale)
+            let context = UIGraphicsGetCurrentContext()
+            UIColor.dimmedLightBackground.setFill()
+            context?.addRect(CGRect(x: 0, y: 0, width: size.width, height: 1))
+            context?.drawPath(using: .fill)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            navigationController.navigationBar.shadowImage = image
+            
             self.tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
             /*let statusBarWindow: UIWindow = UIApplication.shared.value(forKeyPath: "statusBarWindow") as! UIWindow
             let statusBar: UIView = statusBarWindow.value(forKeyPath: "statusBar") as! UIView
             statusBar.backgroundColor = UIColor(displayP3Red: 255, green: 255, blue: 255, alpha: 0.8)
             */
-        } else if scrollView.contentOffset.y < 70 &&  navigationController.isNavigationBarHidden {
-            navigationController.setNavigationBarHidden(false, animated: true)
+        } else if scrollView.contentOffset.y < 118 &&  navigationItem.title != nil {
+            navigationItem.title = nil
+            self.updatedImageColors(self.headerColors)
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.navigationBar.shadowImage = UIImage()
             let top = navigationController.navigationBar.bounds.height + 5
             self.tableView.contentInset = UIEdgeInsets(top: -1 * top, left: 0, bottom: 0, right: 0)
             /*let statusBarWindow: UIWindow = UIApplication.shared.value(forKeyPath: "statusBarWindow") as! UIWindow

@@ -21,7 +21,7 @@ fileprivate let DefaultImageWidth = 320
 class CreateTokenTaskViewController: FormViewController {
     weak public var delegate: CreateTokenTaskDelegate?
     
-    public var tokenInfo: APIToken?
+    weak public var tokenInfo: APIToken?
     
     fileprivate var submitting: Bool = false
     fileprivate var imagesUploaded: Bool = false
@@ -66,13 +66,15 @@ class CreateTokenTaskViewController: FormViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if #available(iOS 11.0, *) {
-            self.navigationController?.navigationBar.prefersLargeTitles = true
-            self.navigationItem.largeTitleDisplayMode = .automatic;
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
         }
-        self.navigationController?.navigationBar.isTranslucent = true
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
         guard let tokenInfo = self.tokenInfo else {
             return
         }
@@ -196,7 +198,10 @@ class CreateTokenTaskViewController: FormViewController {
                 row.title = "选择图片"
                 }
                 .onCellSelection { [weak self] (cell, row) in
-                    self?.showImagePicker()
+                    guard let weakSelf = self else {
+                        return
+                    }
+                    weakSelf.showImagePicker()
             }
             
             <<< ViewRow<UIView>() { (row) in
@@ -225,7 +230,10 @@ class CreateTokenTaskViewController: FormViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        if let navigationController = self.navigationController {
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
     }
     
     static func instantiate() -> CreateTokenTaskViewController
@@ -349,6 +357,8 @@ extension CreateTokenTaskViewController {
                 guard let weakSelf = self else {
                     return
                 }
+                weakSelf.completeUploadTasks = 0
+                weakSelf.imagesUploaded = false
                 weakSelf.submitting = false
                 weakSelf.spinner.stop()
         })
@@ -371,7 +381,7 @@ extension CreateTokenTaskViewController {
         config.shouldSaveNewPicturesToAlbum = true
         config.screens = [.library, .photo]
         config.startOnScreen = .library
-        config.showsCrop = .rectangle(ratio: (16/9))
+        config.showsCrop = .rectangle(ratio: 1)
         config.wordings.libraryTitle = "Gallery"
         config.hidesStatusBar = false
         config.library.maxNumberOfItems = 9

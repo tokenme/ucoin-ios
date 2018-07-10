@@ -21,7 +21,7 @@ fileprivate let DefaultImageWidth = 320
 class EditTokenTaskViewController: FormViewController {
     weak public var delegate: EditTokenTaskDelegate?
     
-    public var tokenTask: APITokenTask?
+    weak public var tokenTask: APITokenTask?
     
     fileprivate var submitting: Bool = false
     fileprivate var imagesUploaded: Bool = false
@@ -67,13 +67,15 @@ class EditTokenTaskViewController: FormViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if #available(iOS 11.0, *) {
-            self.navigationController?.navigationBar.prefersLargeTitles = true
-            self.navigationItem.largeTitleDisplayMode = .automatic;
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
         }
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
         guard let tokenTask = self.tokenTask else {
             return
         }
@@ -84,7 +86,9 @@ class EditTokenTaskViewController: FormViewController {
         self.navigationItem.rightBarButtonItem = saveButton
         
         self.view.addSubview(spinner)
+        
         if tokenTask.token?.totalSupply == nil {
+            self.spinner.start()
             self.getToken((tokenTask.token?.address)!)
         } else {
             setupForm()
@@ -93,7 +97,10 @@ class EditTokenTaskViewController: FormViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        if let navigationController = self.navigationController {
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
     }
     
     static func instantiate() -> EditTokenTaskViewController
@@ -237,7 +244,10 @@ class EditTokenTaskViewController: FormViewController {
                 row.title = "选择图片"
                 }
                 .onCellSelection { [weak self] (cell, row) in
-                    self?.showImagePicker()
+                    guard let weakSelf = self else {
+                        return
+                    }
+                    weakSelf.showImagePicker()
             }
             
             <<< ViewRow<UIView>() { (row) in
@@ -410,6 +420,8 @@ extension EditTokenTaskViewController {
                 guard let weakSelf = self else {
                     return
                 }
+                weakSelf.completeUploadTasks = 0
+                weakSelf.imagesUploaded = false
                 weakSelf.submitting = false
                 weakSelf.spinner.stop()
         })
@@ -432,7 +444,7 @@ extension EditTokenTaskViewController {
         config.shouldSaveNewPicturesToAlbum = true
         config.screens = [.library, .photo]
         config.startOnScreen = .library
-        config.showsCrop = .rectangle(ratio: (16/9))
+        config.showsCrop = .rectangle(ratio: 1)
         config.wordings.libraryTitle = "Gallery"
         config.hidesStatusBar = false
         config.library.maxNumberOfItems = 9
@@ -480,7 +492,6 @@ extension EditTokenTaskViewController {
     }
     
     private func getToken(_ tokenAddress: String) {
-        self.spinner.start()
         UCTokenService.getInfo(
             tokenAddress,
             provider: self.tokenServiceProvider,

@@ -13,9 +13,11 @@ import SnapKit
 class ShowTokenDescriptionViewController: UIViewController {
     weak public var delegate: TokenViewDelegate?
     
-    public var userInfo: APIUser?
-    public var tokenInfo: APIToken?
+    weak public var userInfo: APIUser?
+    weak public var tokenInfo: APIToken?
+    
     fileprivate var textView  = UITextView()
+    
     //=============
     // MARK: - denit
     //=============

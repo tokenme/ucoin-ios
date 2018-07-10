@@ -13,11 +13,13 @@ import PullToRefreshKit
 
 fileprivate let DefaultPageSize: UInt = 10
 
-class TokenProductViewController: UITableViewController {
+class TokenProductViewController: UIViewController {
     
-    fileprivate var userInfo: APIUser?
-    fileprivate var productAddress: String?
-    fileprivate var tokenProduct: APITokenProduct?
+    private var userInfo: APIUser?
+    private var productAddress: String?
+    private var tokenProduct: APITokenProduct?
+    
+    fileprivate let tableView = UITableView(frame: CGRect.zero, style: UITableViewStyle.plain)
     
     fileprivate var sectionsMap: [String] = ["info", "content", "entities"]
     fileprivate let segmentControl = TokenProductSegmentView()
@@ -53,6 +55,12 @@ class TokenProductViewController: UITableViewController {
         self.tokenProduct = product
         self.contentHeaderView.setProduct(product)
         self.contentHeaderView.delegate = self
+        if product?.totalSupply == nil {
+            guard let address = product?.address else {
+                return
+            }
+            self.getTokenProduct(address)
+        }
     }
     
     //=============
@@ -65,9 +73,20 @@ class TokenProductViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.transitioningDelegate = self
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        if let navigationController = self.navigationController {
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            
+            let size = navigationController.navigationBar.frame.size
+            UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.main.scale)
+            let context = UIGraphicsGetCurrentContext()
+            UIColor.dimmedLightBackground.setFill()
+            context?.addRect(CGRect(x: 0, y: 0, width: size.width, height: 1))
+            context?.drawPath(using: .fill)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            navigationController.navigationBar.shadowImage = image
+        }
         self.navigationItem.title = "代币权益"
         //self.extendedLayoutIncludesOpaqueBars = true
         
@@ -91,7 +110,7 @@ class TokenProductViewController: UITableViewController {
         
         self.onSegmentControlUpdated()
         
-        self.tableView.addSubview(spinner)
+        self.view.addSubview(spinner)
         if self.productAddress != "" && self.tokenProduct == nil {
             self.spinner.start()
         }
@@ -101,12 +120,17 @@ class TokenProductViewController: UITableViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if #available(iOS 11.0, *) {
-            self.navigationController?.navigationBar.prefersLargeTitles = false
-            self.navigationItem.largeTitleDisplayMode = .automatic;
+        
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
         }
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        
         self.tableView.reloadDataWithAutoSizingCellWorkAround()
     }
     
@@ -121,6 +145,15 @@ class TokenProductViewController: UITableViewController {
     }
     
     private func setupTableView() {
+        self.view.addSubview(tableView)
+        self.tableView.snp.remakeConstraints { (maker) -> Void in
+            maker.leading.equalToSuperview()
+            maker.trailing.equalToSuperview()
+            maker.top.equalToSuperview()
+            maker.bottom.equalToSuperview()
+        }
+        self.tableView.delegate = self
+        self.tableView.dataSource = self
         self.tableView.register(cellType: EmptyCell.self)
         self.tableView.register(cellType: TokenProductInfoTableCell.self)
         self.tableView.register(cellType: TokenProductContentTableCell.self)
@@ -236,9 +269,9 @@ extension TokenProductViewController: UIViewControllerTransitioningDelegate {
     
 }
 
-extension TokenProductViewController {
+extension TokenProductViewController: UITableViewDelegate, UITableViewDataSource {
     
-    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         switch self.sectionsMap[section] {
         case "content":
             return TokenProductContentHeaderView.height
@@ -249,7 +282,7 @@ extension TokenProductViewController {
         }
     }
     
-    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         switch self.sectionsMap[section] {
         case "content":
             return self.contentHeaderView
@@ -261,11 +294,11 @@ extension TokenProductViewController {
         return nil
     }
     
-    override func numberOfSections(in tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         return self.sectionsMap.count
     }
     
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch self.sectionsMap[section] {
         case "info":
             return 1
@@ -292,7 +325,7 @@ extension TokenProductViewController {
         return 1
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch self.sectionsMap[indexPath.section] {
         case "info":
             let cell = tableView.dequeueReusableCell(for: indexPath) as TokenProductInfoTableCell
@@ -328,7 +361,7 @@ extension TokenProductViewController {
         }
     }
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         switch self.sectionsMap[indexPath.section] {
         case "entities":
             if currentSegment == 0 && self.orders.count > 0 {
@@ -343,10 +376,14 @@ extension TokenProductViewController {
         }
     }
     
-    override func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
+    func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
         switch self.sectionsMap[indexPath.section] {
         case "entities":
-            if (currentSegment == 0 && (orders[indexPath.row].isOwnedByUser(wallet: userInfo?.wallet) || orders[indexPath.row].isSelledByUser(wallet: userInfo?.wallet))) {
+            if orders.count <= indexPath.row {
+                return false
+            }
+            let order = orders[indexPath.row]
+            if (currentSegment == 0 && (order.isOwnedByUser(wallet: userInfo?.wallet) || order.isSelledByUser(wallet: userInfo?.wallet))) {
                 return true
             }
             return false
@@ -409,7 +446,11 @@ extension TokenProductViewController {
             address,
             provider: self.orderServiceProvider,
             success: { order in
-                print(order.toJSONString())
+                let vc = OrderViewController.instantiate()
+                vc.setOrder(order)
+                DispatchQueue.main.async {
+                    self.navigationController?.pushViewController(vc, animated: true)
+                }
             },
             failed: { error in
                 DispatchQueue.main.async {
@@ -516,8 +557,8 @@ extension TokenProductViewController: TokenProductViewDelegate {
         let tokenVC = TokenViewController.instantiate()
         if tokenAddress != nil {
             tokenVC.setTokenAddress(tokenAddress)
-        } else if let tokenAddress = self.tokenProduct?.token?.address {
-            tokenVC.setTokenAddress(tokenAddress)
+        } else if let token = self.tokenProduct?.token {
+            tokenVC.setToken(token)
         } else {
             return
         }

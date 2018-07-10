@@ -14,12 +14,12 @@ import Moya
 class EditTokenDescriptionViewController: UIViewController {
     
     weak public var delegate: TokenViewDelegate?
+    weak public var tokenInfo: APIToken?
     
     private var tokenServiceProvider = MoyaProvider<UCTokenService>(plugins: [networkActivityPlugin, AccessTokenPlugin(tokenClosure: AccessTokenClosure())])
     
     fileprivate var spinner = LoaderModal(backgroundColor: UIColor.white.withAlphaComponent(0.6))!
     
-    public var tokenInfo: APIToken?
     fileprivate var textView : UITextView?
     fileprivate let textStorage = MarklightTextStorage()
     //=============

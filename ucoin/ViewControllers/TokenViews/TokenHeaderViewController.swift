@@ -22,15 +22,14 @@ fileprivate let DefaultLogoImage = UIImage(color: .darkGray)
 
 class TokenHeaderViewController: UIViewController, Reusable {
     
-    private var user: APIUser?
-    private var token: APIToken?
+    weak private var user: APIUser?
+    weak private var token: APIToken?
+    weak public var delegate: TokenViewDelegate?
     
     private var bgImageView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: Double(UIScreen.main.bounds.width), height: DefaultBgMaxHeight))
     private var logoView = UIImageView(frame: CGRect(x: 0, y: 0, width: DefaultLogoWidth, height: DefaultLogoWidth))
     private var nameLabel = UILabel(frame: CGRect.zero)
     private var symbolLabel = UILabel(frame: CGRect.zero)
-    
-    weak public var delegate: TokenViewDelegate?
     
     private let logoDownloader = Moa()
     

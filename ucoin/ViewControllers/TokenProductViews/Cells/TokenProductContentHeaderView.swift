@@ -76,13 +76,22 @@ final class TokenProductContentHeaderView: UIView, Reusable {
         
         buyButton.setTitle("下单", for: .normal)
         buyButton.backgroundColor = UIColor.primaryBlue
-        buyButton.cornerRadius = 10
+        buyButton.cornerRadius = 15
         buyButton.addTarget(self, action: #selector(buy), for: .touchUpInside)
         self.addSubview(buyButton)
         buyButton.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalTo(priceView.snp.trailing).offset(25)
             maker.trailing.equalToSuperview().offset(-16)
             maker.centerY.equalToSuperview()
+        }
+        let seperatorLine = UIView()
+        seperatorLine.backgroundColor = UIColor.dimmedLightBackground
+        self.addSubview(seperatorLine)
+        seperatorLine.snp.remakeConstraints { (maker) -> Void in
+            maker.leading.equalToSuperview()
+            maker.trailing.equalToSuperview()
+            maker.bottom.equalToSuperview().offset(4)
+            maker.height.equalTo(0.5)
         }
         self.backgroundColor = UIColor(displayP3Red: 255, green: 255, blue: 255, alpha: 0.8)
     }

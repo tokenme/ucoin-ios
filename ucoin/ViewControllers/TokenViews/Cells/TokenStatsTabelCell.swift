@@ -156,7 +156,7 @@ final class TokenStatsTableCell: UITableViewCell, Reusable {
             }
             self.totalSupplyNumberLabel.text = val.formate(formatter: numberFormatter)
         } else {
-            self.totalSupplyNumberLabel.text = "0"
+            self.totalSupplyNumberLabel.text = "-"
         }
         if let circulatingSupply = token?.circulatingSupply {
             var val = Double(circulatingSupply)
@@ -165,10 +165,18 @@ final class TokenStatsTableCell: UITableViewCell, Reusable {
             }
             self.circulatingSupplyNumberLabel.text = val.formate(formatter: numberFormatter)
         } else {
-            self.circulatingSupplyNumberLabel.text = "0"
+            self.circulatingSupplyNumberLabel.text = "-"
         }
-        self.totalTransfersNumberLabel.text = "\(token?.totalTransfers ?? 0)"
-        self.totalHoldersNumberLabel.text = "\(token?.totalHolders ?? 0)"
+        if let totalTransfers = token?.totalTransfers {
+            self.totalTransfersNumberLabel.text = "\(totalTransfers)"
+        } else {
+            self.totalTransfersNumberLabel.text = "-"
+        }
+        if let totalHolders = token?.totalHolders {
+            self.totalHoldersNumberLabel.text = "\(totalHolders + 1)"
+        } else {
+            self.totalHoldersNumberLabel.text = "-"
+        }
         self.stackView.needsUpdateConstraints()
     }
 

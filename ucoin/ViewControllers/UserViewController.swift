@@ -13,14 +13,14 @@ import PullToRefreshKit
 
 class UserViewController: UITableViewController {
     
-    fileprivate var userInfo: APIUser?
-    fileprivate var ownedTokens: [APIToken] = []
-    fileprivate var sectionsMap: [String] = ["actions", "ownedTokens"]
+    private var userInfo: APIUser?
+    private var ownedTokens: [APIToken] = []
+    private var sectionsMap: [String] = ["actions", "ownedTokens"]
     
-    fileprivate var loadingUserInfo = false
-    fileprivate var loadingOwnedTokens = false
+    private var loadingUserInfo = false
+    private var loadingOwnedTokens = false
     
-    fileprivate var userHeaderViewController = UserHeaderViewController()
+    private var userHeaderViewController = UserHeaderViewController()
     
     private var userServiceProvider = MoyaProvider<UCUserService>(plugins: [networkActivityPlugin, AccessTokenPlugin(tokenClosure: AccessTokenClosure())])
     
@@ -59,7 +59,10 @@ class UserViewController: UITableViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.setNavigationBarHidden(true, animated: animated)
+        self.navigationController?.navigationBar.isTranslucent = true
+        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
+        self.navigationController?.navigationBar.shadowImage = UIImage()
+        self.navigationController?.setNavigationBarHidden(false, animated: animated)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -73,7 +76,8 @@ class UserViewController: UITableViewController {
     }
     
     private func setupTableView() {
-        self.tableView.contentInset = UIEdgeInsets(top: -5, left: 0, bottom: 0, right: 0)
+        let top = (self.navigationController?.navigationBar.bounds.height)! + 5
+        self.tableView.contentInset = UIEdgeInsets(top: -1 * top, left: 0, bottom: 0, right: 0)
         self.tableView.register(cellType: UserActionsTableCell.self)
         self.tableView.register(cellType: OwnedTokenCell.self)
         self.tableView.register(cellType: EmptyOwnedTokenCell.self)
@@ -87,6 +91,8 @@ class UserViewController: UITableViewController {
         if let userInfo: DefaultsUser = Defaults[.user] {
             self.userInfo = APIUser.init(user: userInfo)
             self.userHeaderViewController.setUser(self.userInfo)
+            let settingButton = UIBarButtonItem(image: UIImage(named: "Setting")?.withRenderingMode(.alwaysTemplate), style: UIBarButtonItemStyle.plain, target: self, action: #selector(gotoSetting))
+            self.navigationItem.rightBarButtonItem = settingButton
         } else if CheckValidAccessToken() {
             self.getUserInfo(false)
         } else {
@@ -153,6 +159,11 @@ extension UserViewController {
                 weakSelf.userInfo = user
                 weakSelf.userHeaderViewController.setUser(user)
                 weakSelf.userHeaderViewController.stopLoadingUserInfo()
+                
+                if weakSelf.navigationItem.rightBarButtonItem == nil {
+                    let settingButton = UIBarButtonItem(image: UIImage(named: "Setting")?.withRenderingMode(.alwaysTemplate), style: UIBarButtonItemStyle.plain, target: weakSelf, action: #selector(weakSelf.gotoSetting))
+                    weakSelf.navigationItem.rightBarButtonItem = settingButton
+                }
             },
             failed: {[weak self] error in
                 guard let weakSelf = self else {
@@ -352,6 +363,12 @@ extension UserViewController: UserHeaderViewDelegate {
     }
     
     func logoutSucceeded() {
+        self.userInfo = nil
+        self.userHeaderViewController.setUser(nil)
+    }
+    
+    @objc private func gotoSetting() {
+        self.navigationItem.rightBarButtonItem = nil
         self.userInfo = nil
         self.userHeaderViewController.setUser(nil)
     }

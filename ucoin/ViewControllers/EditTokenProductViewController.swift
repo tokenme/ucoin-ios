@@ -21,7 +21,7 @@ fileprivate let DefaultImageWidth = 320
 class EditTokenProductViewController: FormViewController {
     weak public var delegate: EditTokenProductDelegate?
     
-    public var tokenProduct: APITokenProduct?
+    weak public var tokenProduct: APITokenProduct?
     fileprivate let spinner = LoaderModal(backgroundColor: UIColor(displayP3Red: 255, green: 255, blue: 255, alpha: 0.6))!
     
     fileprivate var submitting: Bool = false
@@ -226,7 +226,10 @@ class EditTokenProductViewController: FormViewController {
                 row.title = "选择图片"
                 }
                 .onCellSelection { [weak self] (cell, row) in
-                    self?.showImagePicker()
+                    guard let weakSelf = self else {
+                        return
+                    }
+                    weakSelf.showImagePicker()
             }
             
             <<< ViewRow<UIView>() { (row) in
@@ -399,6 +402,8 @@ extension EditTokenProductViewController {
                 guard let weakSelf = self else {
                     return
                 }
+                weakSelf.completeUploadTasks = 0
+                weakSelf.imagesUploaded = false
                 weakSelf.submitting = false
                 weakSelf.spinner.stop()
         })
@@ -421,7 +426,7 @@ extension EditTokenProductViewController {
         config.shouldSaveNewPicturesToAlbum = true
         config.screens = [.library, .photo]
         config.startOnScreen = .library
-        config.showsCrop = .rectangle(ratio: (16/9))
+        config.showsCrop = .rectangle(ratio: 1)
         config.wordings.libraryTitle = "Gallery"
         config.hidesStatusBar = false
         config.library.maxNumberOfItems = 9

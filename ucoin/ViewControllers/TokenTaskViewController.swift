@@ -11,15 +11,15 @@ import SwiftyUserDefaults
 import Moya
 import PullToRefreshKit
 
-class TokenTaskViewController: UITableViewController {
+class TokenTaskViewController: UIViewController {
     
-    fileprivate var userInfo: APIUser?
-    fileprivate var taskId: UInt64?
-    fileprivate var tokenTask: APITokenTask?
+    private var userInfo: APIUser?
+    private var taskId: UInt64?
+    private var tokenTask: APITokenTask?
     fileprivate var comments: [String] = []
-    fileprivate var sectionsMap: [String] = ["info", "comments"]
+    fileprivate var sectionsMap: [String] = ["info", "content", "entries"]
     
-    fileprivate let infoHeaderView = TokenTaskInfoHeaderCell()
+    fileprivate let tableView = UITableView(frame: CGRect.zero, style: UITableViewStyle.plain)
     
     fileprivate var tasksFooterState: FooterRefresherState = .normal
     fileprivate let refreshFooter = DefaultRefreshFooter.footer()
@@ -36,7 +36,6 @@ class TokenTaskViewController: UITableViewController {
     
     public func setTask(_ task: APITokenTask?) {
         self.tokenTask = task
-        self.infoHeaderView.setTask(task)
     }
     
     //=============
@@ -49,9 +48,22 @@ class TokenTaskViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.transitioningDelegate = self
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        
+        if let navigationController = self.navigationController {
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            
+            let size = navigationController.navigationBar.frame.size
+            UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.main.scale)
+            let context = UIGraphicsGetCurrentContext()
+            UIColor.dimmedLightBackground.setFill()
+            context?.addRect(CGRect(x: 0, y: 0, width: size.width, height: 1))
+            context?.drawPath(using: .fill)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            navigationController.navigationBar.shadowImage = image
+        }
+        
         self.navigationItem.title = "代币任务"
         
         self.extendedLayoutIncludesOpaqueBars = true
@@ -68,12 +80,6 @@ class TokenTaskViewController: UITableViewController {
             self.navigationItem.rightBarButtonItem = editButton
         }
         
-        self.tableView.addSubview(spinner)
-        
-        if self.taskId ?? 0 > 0 && self.tokenTask == nil {
-            self.spinner.start()
-        }
-        
         self.setupTableView()
         
         self.setupPullRefresh()
@@ -81,17 +87,25 @@ class TokenTaskViewController: UITableViewController {
             self.tableView.reloadDataWithAutoSizingCellWorkAround()
         }
         
+        self.view.addSubview(spinner)
+        
+        if self.taskId ?? 0 > 0 && self.tokenTask == nil {
+            self.spinner.start()
+        }
+        
         self.refresh(true)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if #available(iOS 11.0, *) {
-            self.navigationController?.navigationBar.prefersLargeTitles = false
-            self.navigationItem.largeTitleDisplayMode = .automatic;
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
         }
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
     }
     
     override func didReceiveMemoryWarning() {
@@ -105,8 +119,19 @@ class TokenTaskViewController: UITableViewController {
     }
     
     private func setupTableView() {
+        self.view.addSubview(tableView)
+        self.tableView.snp.remakeConstraints { (maker) -> Void in
+            maker.leading.equalToSuperview()
+            maker.trailing.equalToSuperview()
+            maker.top.equalToSuperview()
+            maker.bottom.equalToSuperview()
+        }
+        self.tableView.delegate = self
+        self.tableView.dataSource = self
+        
         self.tableView.register(cellType: EmptyCell.self)
         self.tableView.register(cellType: TokenTaskInfoTableCell.self)
+        self.tableView.register(cellType: TokenTaskContentTableCell.self)
         self.tableView.separatorInset = UIEdgeInsetsMake(0, 0, 0, 0)
         self.tableView.estimatedRowHeight = 44.0
         self.tableView.rowHeight = UITableViewAutomaticDimension
@@ -179,57 +204,57 @@ extension TokenTaskViewController: UIViewControllerTransitioningDelegate {
     
 }
 
-extension TokenTaskViewController {
+extension TokenTaskViewController: UITableViewDelegate, UITableViewDataSource {
     
-    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        switch self.sectionsMap[section] {
-        case "info":
-            return TokenTaskInfoHeaderCell.height
-        default:
-            return 0
-        }
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 0
     }
     
-    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        switch self.sectionsMap[section] {
-        case "info":
-            return self.infoHeaderView
-        default:
-            break
-        }
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         return nil
     }
     
-    override func numberOfSections(in tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         return self.sectionsMap.count
     }
     
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch self.sectionsMap[section] {
         case "info":
             return 1
-        case "comments":
-            return self.comments.count
+        case "content":
+            return 1
+        case "entries":
+            return 1
         default:
             fatalError("Out of bounds, should not happen")
         }
         return 1
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch self.sectionsMap[indexPath.section] {
         case "info":
             let cell = tableView.dequeueReusableCell(for: indexPath) as TokenTaskInfoTableCell
+            cell.delegate = self
+            cell.fill(self.tokenTask, user: self.userInfo)
+            return cell
+        case "content":
+            let cell = tableView.dequeueReusableCell(for: indexPath) as TokenTaskContentTableCell
             cell.textViewDelegate = self
             cell.fill(self.tokenTask)
             return cell
-        case "comments":
+        case "entries":
             let cell = tableView.dequeueReusableCell(for: indexPath) as EmptyCell
             cell.fill("该代币还没有描述", isLoading: false)
             return cell
         default:
             fatalError("Out of bounds, should not happen")
         }
+    }
+    
+    func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
+        return false
     }
 }
 
@@ -289,5 +314,44 @@ extension TokenTaskViewController: UITextViewDelegate {
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
         print("Should interact with: \(URL)")
         return true
+    }
+}
+
+extension TokenTaskViewController: TokenTaskViewDelegate {
+    
+    func gotoToken(_ tokenAddress: String?) {
+        let tokenVC = TokenViewController.instantiate()
+        if tokenAddress != nil {
+            tokenVC.setTokenAddress(tokenAddress)
+        } else if let token = self.tokenTask?.token {
+            tokenVC.setToken(token)
+        } else {
+            return
+        }
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(tokenVC, animated: true)
+        }
+    }
+    
+    func showSubmitEvidence() {
+        guard let task = self.tokenTask else {
+            return
+        }
+        let vc = CreateTokenTaskEvidenceViewController.instantiate()
+        vc.tokenTask = task
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+    
+    func gotoTokenTaskEvidences() {
+        guard let task = self.tokenTask else {
+            return
+        }
+        let vc = TokenTaskEvidencesViewController.instantiate()
+        vc.setTask(task)
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
     }
 }

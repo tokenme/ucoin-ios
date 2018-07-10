@@ -11,6 +11,7 @@ import Moya
 enum UCQiniuService {
     case tokenProduct(token: String, amount: Int)
     case tokenTask(token: String, amount: Int)
+    case tokenTaskEvidence(taskId: UInt64, amount: Int)
     case tokenLogo(token: String)
 }
 
@@ -30,6 +31,8 @@ extension UCQiniuService: TargetType, AccessTokenAuthorizable {
             return "/token/product"
         case .tokenTask(_, _):
             return "/token/task"
+        case .tokenTaskEvidence(_, _):
+            return "/token/task/evidence"
         case .tokenLogo(_):
             return "/token/logo"
         }
@@ -37,7 +40,7 @@ extension UCQiniuService: TargetType, AccessTokenAuthorizable {
     
     var method: Moya.Method {
         switch self {
-        case .tokenProduct, .tokenTask, .tokenLogo:
+        case .tokenProduct, .tokenTask, .tokenLogo, .tokenTaskEvidence:
             return .post
         }
     }
@@ -47,6 +50,8 @@ extension UCQiniuService: TargetType, AccessTokenAuthorizable {
             return .requestParameters(parameters: ["token": token, "amount": amount], encoding: JSONEncoding.default)
         case let .tokenTask(token, amount):
             return .requestParameters(parameters: ["token": token, "amount": amount], encoding: JSONEncoding.default)
+        case let .tokenTaskEvidence(taskId, amount):
+            return .requestParameters(parameters: ["task_id": taskId, "amount": amount], encoding: JSONEncoding.default)
         case let .tokenLogo(token):
             return .requestParameters(parameters: ["token": token], encoding: JSONEncoding.default)
         }
@@ -57,6 +62,8 @@ extension UCQiniuService: TargetType, AccessTokenAuthorizable {
         case .tokenProduct(_, _):
             return "[]".utf8Encoded
         case .tokenTask(_, _):
+            return "[]".utf8Encoded
+        case .tokenTaskEvidence(_, _):
             return "[]".utf8Encoded
         case .tokenLogo(_):
             return "{}".utf8Encoded
@@ -112,6 +119,40 @@ extension UCQiniuService {
         complete: (() -> Void)?) {
         provider.request(
             .tokenTask(token: token, amount: amount)
+        ){ result in
+            switch result {
+            case let .success(response):
+                do {
+                    let upTokens = try response.mapArray(APIQiniu.self)
+                    success?(upTokens)
+                } catch {
+                    do {
+                        let err = try response.mapObject(APIResponse.self)
+                        if let errorCode = err.code {
+                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                        } else {
+                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
+                        }
+                    } catch {
+                        failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                    }
+                }
+            case let .failure(error):
+                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
+            }
+            complete?()
+        }
+    }
+    
+    static func getTokenTaskEvidence(
+        _ taskId: UInt64,
+        _ amount: Int,
+        provider: MoyaProvider<UCQiniuService>,
+        success: ((_ upTokens: [APIQiniu]) -> Void)?,
+        failed: ((_ error: UCAPIError) -> Void)?,
+        complete: (() -> Void)?) {
+        provider.request(
+            .tokenTaskEvidence(taskId: taskId, amount: amount)
         ){ result in
             switch result {
             case let .success(response):

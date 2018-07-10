@@ -31,7 +31,7 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         titleLabel.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(16)
             maker.trailing.equalToSuperview().offset(-16)
-            maker.top.equalToSuperview().offset(8)
+            maker.top.equalToSuperview().offset(16)
         }
         
         
@@ -119,8 +119,8 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         symbolLabel.minimumScaleFactor = 8.0 / symbolLabel.font.pointSize
         containerView.addSubview(symbolLabel)
         symbolLabel.snp.remakeConstraints { (maker) -> Void in
-            maker.top.equalToSuperview().offset(8)
-            maker.trailing.equalToSuperview().offset(-8)
+            maker.top.equalToSuperview().offset(16)
+            maker.trailing.equalToSuperview().offset(-16)
             maker.width.lessThanOrEqualTo(DefaultSymbolWidth)
         }
         
@@ -138,10 +138,17 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         
         self.contentView.addSubview(containerView)
         
+        containerView.backgroundColor = UIColor.white
+        containerView.layer.shadowColor = UIColor.black.cgColor
+        containerView.layer.shadowOffset = CGSize(width: 0.0, height: 1)
+        containerView.layer.shadowRadius = 2
+        containerView.layer.shadowOpacity = 0.3
+        containerView.layer.masksToBounds = false
+        
         containerView.snp.remakeConstraints { (maker) -> Void in
-            maker.leading.equalToSuperview().offset(8)
-            maker.trailing.equalToSuperview().offset(-8)
-            maker.top.equalToSuperview().offset(8)
+            maker.leading.equalToSuperview()
+            maker.trailing.equalToSuperview()
+            maker.top.equalToSuperview()
             maker.bottom.equalToSuperview().offset(-8)
         }
         
@@ -161,7 +168,11 @@ final class TokenProductInfoTableCell: UITableViewCell, Reusable {
         let endDate = dateFormatter.string(from: product.endDate!)
         dateRangeLabel.text = "有效期: \(startDate) - \(endDate)"
         
-        totalSupplyLabel.text = "\(product.totalSupply ?? 0)"
+        if let totalSupply = product.totalSupply {
+            totalSupplyLabel.text = "\(totalSupply)"
+        } else {
+            totalSupplyLabel.text = "-"
+        }
         
         if product.amount ?? 0 > 0 {
             amountLabel.text = "\(product.amount ?? 0)"
