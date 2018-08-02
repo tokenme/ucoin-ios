@@ -13,7 +13,18 @@ import PullToRefreshKit
 
 class TokenTaskViewController: UIViewController {
     
-    private var userInfo: APIUser?
+    private var userInfo: APIUser? {
+        get {
+            if let userInfo: DefaultsUser = Defaults[.user] {
+                if CheckValidAccessToken() {
+                    return APIUser.init(user: userInfo)
+                }
+                return nil
+            }
+            return nil
+        }
+    }
+    
     private var taskId: UInt64?
     private var tokenTask: APITokenTask?
     fileprivate var comments: [String] = []
@@ -67,10 +78,6 @@ class TokenTaskViewController: UIViewController {
         self.navigationItem.title = "代币任务"
         
         self.extendedLayoutIncludesOpaqueBars = true
-        
-        if let userInfo: DefaultsUser = Defaults[.user] {
-            self.userInfo = APIUser.init(user: userInfo)
-        }
         
         guard let tokenTask = self.tokenTask else {
             return

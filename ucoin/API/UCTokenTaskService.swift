@@ -7,6 +7,7 @@
 //
 
 import Moya
+import Hydra
 
 enum UCTokenTaskService {
     case create(task: APITokenTask)
@@ -246,97 +247,91 @@ extension UCTokenTaskService: TargetType, AccessTokenAuthorizable {
 extension UCTokenTaskService {
     static func createTokenTask(
         _ taskInfo: APITokenTask,
-        provider: MoyaProvider<UCTokenTaskService>,
-        success: ((_ product: APITokenTask) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .create(task: taskInfo)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let task = try response.mapObject(APITokenTask.self)
-                    if let errorCode = task.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: task.message ?? "未知错误"))
-                    } else {
-                        success?(task)
+        provider: MoyaProvider<UCTokenTaskService>) -> Promise<APITokenTask> {
+        return Promise<APITokenTask>(in: .background, { resolve, reject, _ in
+            provider.request(
+                .create(task: taskInfo)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let task = try response.mapObject(APITokenTask.self)
+                        if let errorCode = task.code {
+                            reject(UCAPIError.error(code: errorCode, msg: task.message ?? "未知错误"))
+                        } else {
+                            resolve(task)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func updateTokenTask(
         _ taskInfo: APITokenTask,
-        provider: MoyaProvider<UCTokenTaskService>,
-        success: ((_ product: APITokenTask) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .update(task: taskInfo)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let task = try response.mapObject(APITokenTask.self)
-                    if let errorCode = task.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: task.message ?? "未知错误"))
-                    } else {
-                        success?(task)
+        provider: MoyaProvider<UCTokenTaskService>) -> Promise<APITokenTask> {
+        return Promise<APITokenTask>(in: .background, { resolve, reject, _ in
+            provider.request(
+                .update(task: taskInfo)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let task = try response.mapObject(APITokenTask.self)
+                        if let errorCode = task.code {
+                            reject(UCAPIError.error(code: errorCode, msg: task.message ?? "未知错误"))
+                        } else {
+                            resolve(task)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func listTokenTask(
         _ tokenAddress: String,
         _ page: UInt,
         _ pageSize: UInt,
-        provider: MoyaProvider<UCTokenTaskService>,
-        success: ((_ products: [APITokenTask]) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: @escaping () -> Void) {
-        provider.request(
-            .list(token: tokenAddress, page: page, pageSize: pageSize)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let tasks = try response.mapArray(APITokenTask.self)
-                    success?(tasks)
-                } catch {
+        provider: MoyaProvider<UCTokenTaskService>) -> Promise<[APITokenTask]> {
+        return Promise<[APITokenTask]>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .list(token: tokenAddress, page: page, pageSize: pageSize)
+            ){ result in
+                switch result {
+                case let .success(response):
                     do {
-                        let err = try response.mapObject(APIResponse.self)
-                        if let errorCode = err.code {
-                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
-                        } else {
-                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
-                        }
+                        let tasks = try response.mapArray(APITokenTask.self)
+                        resolve(tasks)
                     } catch {
-                        if response.statusCode == 200 {
-                            success?([])
-                        } else {
-                            failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        do {
+                            let err = try response.mapObject(APIResponse.self)
+                            if let errorCode = err.code {
+                                reject(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                            } else {
+                                reject(UCAPIError.error(code: 0, msg: "未知错误"))
+                            }
+                        } catch {
+                            if response.statusCode == 200 {
+                                resolve([])
+                            } else {
+                                reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                            }
                         }
                     }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete()
-        }
+        })
     }
     
     static func getTokenTask(

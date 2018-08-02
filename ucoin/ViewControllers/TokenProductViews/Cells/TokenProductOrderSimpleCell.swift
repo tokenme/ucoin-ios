@@ -136,10 +136,11 @@ final class TokenProductOrderSimpleCell: UITableViewCell, Reusable {
                 }
                 weakSelf.indicator.stopAnimating()
                 weakSelf.indicator.isHidden = true
+                weakSelf.indicator.snp.removeConstraints()
                 weakSelf.dateLabel.snp.remakeConstraints { (maker) -> Void in
                     maker.leading.equalToSuperview().offset(16)
                     maker.trailing.equalToSuperview().offset(-16)
-                    maker.top.equalTo(weakSelf.indicator.snp.bottom).offset(8)
+                    maker.top.equalTo(weakSelf.txLabel.snp.bottom).offset(8)
                     maker.bottom.equalToSuperview().offset(-8)
                 }
             }
@@ -153,7 +154,7 @@ final class TokenProductOrderSimpleCell: UITableViewCell, Reusable {
                 weakSelf.dateLabel.snp.remakeConstraints { (maker) -> Void in
                     maker.leading.equalToSuperview().offset(16)
                     maker.trailing.equalToSuperview().offset(-16)
-                    maker.top.equalTo(weakSelf.txLabel.snp.bottom).offset(8)
+                    maker.top.equalTo(weakSelf.indicator.snp.bottom).offset(8)
                     maker.bottom.equalToSuperview().offset(-8)
                 }
             }

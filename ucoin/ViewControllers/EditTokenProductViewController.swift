@@ -15,6 +15,7 @@ import Moya
 import WSTagsField
 import YPImagePicker
 import Qiniu
+import Hydra
 
 fileprivate let DefaultImageWidth = 320
 
@@ -66,18 +67,20 @@ class EditTokenProductViewController: FormViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if #available(iOS 11.0, *) {
-            self.navigationController?.navigationBar.prefersLargeTitles = true
-            self.navigationItem.largeTitleDisplayMode = .automatic;
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
         }
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
         guard let tokenProduct = self.tokenProduct else {
             return
         }
         
-        self.navigationItem.title = "修改\(tokenProduct.token?.symbol ?? "")代币权益"
+        self.navigationItem.title = "修改\(tokenProduct.token?.symbol ?? "")权益"
         
         let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(updateTokenProduct))
         self.navigationItem.rightBarButtonItem = saveButton
@@ -93,7 +96,14 @@ class EditTokenProductViewController: FormViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
     }
     
     static func instantiate() -> EditTokenProductViewController
@@ -311,101 +321,87 @@ extension EditTokenProductViewController {
         self.submitting = true
         self.spinner.start()
         if self.pickedImages.count > 0 {
-            UCQiniuService.getTokenProduct(
-                newTokenProduct.token!.address!,
-                self.pickedImages.count,
-                provider: self.qiniuServiceProvider,
-                success: {[weak self] upTokens in
-                    guard let weakSelf = self else {
-                        return
+            async({[weak self] _ -> APITokenProduct in
+                guard let weakSelf = self else {
+                    throw UCAPIError.ignore
+                }
+                let upTokens = try! ..UCQiniuService.getTokenProduct(
+                    newTokenProduct.token!.address!,
+                    weakSelf.pickedImages.count,
+                    provider: weakSelf.qiniuServiceProvider)
+                let promises = upTokens.map { return weakSelf.uploadImage($0) }
+                let _ = try! ..all(promises)
+                var images: [String] = []
+                for upToken in upTokens {
+                    if !upToken.uploaded {
+                        continue
                     }
-                    for upToken in upTokens {
-                        weakSelf.uploadImage(upToken, success: { [weak weakSelf] () -> Void in
-                            guard let weakSelfSub = weakSelf else {
-                                return
-                            }
-                            var images: [String] = []
-                            for upToken in upTokens {
-                                if !upToken.uploaded {
-                                    continue
-                                }
-                                if let link = upToken.link {
-                                    images.append(link)
-                                }
-                            }
-                            newTokenProduct.images = images
-                            weakSelfSub.doUpdateTokenProduct(newTokenProduct)
-                        })
+                    if let link = upToken.link {
+                        images.append(link)
                     }
-                },
-                failed: {[weak self] error in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    DispatchQueue.main.async {
-                        UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                        weakSelf.spinner.stop()
-                    }
-                },complete: {[weak self] in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    weakSelf.submitting = false
+                }
+                newTokenProduct.images = images
+                let createdProduct = try! ..UCTokenProductService.updateTokenProduct(
+                    newTokenProduct,
+                    provider: weakSelf.tokenProductServiceProvider)
+                return createdProduct
+            }).then(in: .main, {[weak self] product in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.delegate?.tokenProductUpdated(product: product)
+                weakSelf.navigationController?.popViewController(animated: true)
+            }).catch(in: .main, {error in
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }).always(in: .main, body: {[weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.submitting = false
+                weakSelf.spinner.stop()
             })
         } else {
-            self.doUpdateTokenProduct(newTokenProduct)
+            UCTokenProductService.updateTokenProduct(
+                newTokenProduct,
+                provider: self.tokenProductServiceProvider)
+            .then(in: .main, {[weak self] product in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.delegate?.tokenProductUpdated(product: product)
+                weakSelf.navigationController?.popViewController(animated: true)
+            }).catch(in: .main, {error in
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }).always(in: .main, body: {[weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.submitting = false
+                weakSelf.spinner.stop()
+            })
         }
     }
     
-    private func uploadImage(_ upToken: APIQiniu, success:@escaping ()->Void) {
-        let magager = QiniuManager.sharedInstance
-        let totalTasks = self.pickedImages.count
-        let img = self.pickedImages[upToken.index!]
-        
-        magager.uploader.put(
-            img.data(),
-            key: upToken.key,
-            token: upToken.upToken,
-            complete: { [weak self](info: QNResponseInfo?, key: String?, resp: [AnyHashable : Any]?) -> Void in
-                guard let weakSelf = self else {
-                    return
-                }
-                if info!.isOK {
-                    upToken.uploaded = true
-                }
-                weakSelf.completeUploadTasks += 1
-                if weakSelf.completeUploadTasks >= totalTasks && !weakSelf.imagesUploaded {
-                    weakSelf.imagesUploaded = true
-                    success()
-                }
+    private func uploadImage(_ upToken: APIQiniu) -> Promise<APIQiniu> {
+        return Promise<APIQiniu>(in: .background, {[weak self] resolve, reject, _ in
+            let magager = QiniuManager.sharedInstance
+            guard let weakSelf = self else {
+                reject(UCAPIError.ignore)
+                return
+            }
+            let img = weakSelf.pickedImages[upToken.index!]
+            magager.uploader.put(
+                img.data(),
+                key: upToken.key,
+                token: upToken.upToken,
+                complete: { (info: QNResponseInfo?, key: String?, resp: [AnyHashable : Any]?) -> Void in
+                    if let ret = info?.isOK, ret {
+                        upToken.uploaded = true
+                        resolve(upToken)
+                        return
+                    }
+                    reject(UCAPIError.unknown(msg: "upload image failed"))
             }, option: nil)
-    }
-    
-    private func doUpdateTokenProduct(_ tokenProduct: APITokenProduct) {
-        UCTokenProductService.updateTokenProduct(
-            tokenProduct,
-            provider: self.tokenProductServiceProvider,
-            success: {[weak self] product in
-                guard let weakSelf = self else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    weakSelf.delegate?.tokenProductUpdated(product: product)
-                    weakSelf.navigationController?.popViewController(animated: true)
-                }
-            },
-            failed: {error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-            },complete: {[weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.completeUploadTasks = 0
-                weakSelf.imagesUploaded = false
-                weakSelf.submitting = false
-                weakSelf.spinner.stop()
         })
     }
     
@@ -477,26 +473,20 @@ extension EditTokenProductViewController {
         self.spinner.start()
         UCTokenService.getInfo(
             tokenAddress,
-            provider: self.tokenServiceProvider,
-            success: {[weak self] token in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.tokenProduct?.token = token
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    weakSelf.spinner.stop()
-                    weakSelf.setupForm()
-                }
+            provider: self.tokenServiceProvider)
+        .then(in: .main, {[weak self] token in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.tokenProduct?.token = token
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.spinner.stop()
+            weakSelf.setupForm()
         })
     }
 }

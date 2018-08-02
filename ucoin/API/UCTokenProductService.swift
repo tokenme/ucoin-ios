@@ -7,6 +7,7 @@
 //
 
 import Moya
+import Hydra
 
 enum UCTokenProductService {
     case create(product: APITokenProduct)
@@ -228,124 +229,116 @@ extension UCTokenProductService: TargetType, AccessTokenAuthorizable {
 extension UCTokenProductService {
     static func createTokenProduct(
         _ productInfo: APITokenProduct,
-        provider: MoyaProvider<UCTokenProductService>,
-        success: ((_ product: APITokenProduct) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .create(product: productInfo)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let product = try response.mapObject(APITokenProduct.self)
-                    if let errorCode = product.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: product.message ?? "未知错误"))
-                    } else {
-                        success?(product)
+        provider: MoyaProvider<UCTokenProductService>) -> Promise<APITokenProduct> {
+        return Promise<APITokenProduct>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .create(product: productInfo)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let product = try response.mapObject(APITokenProduct.self)
+                        if let errorCode = product.code {
+                            reject(UCAPIError.error(code: errorCode, msg: product.message ?? "未知错误"))
+                        } else {
+                            resolve(product)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func updateTokenProduct(
         _ productInfo: APITokenProduct,
-        provider: MoyaProvider<UCTokenProductService>,
-        success: ((_ product: APITokenProduct) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .update(product: productInfo)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let product = try response.mapObject(APITokenProduct.self)
-                    if let errorCode = product.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: product.message ?? "未知错误"))
-                    } else {
-                        success?(product)
+        provider: MoyaProvider<UCTokenProductService>) -> Promise<APITokenProduct> {
+        return Promise<APITokenProduct>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .update(product: productInfo)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let product = try response.mapObject(APITokenProduct.self)
+                        if let errorCode = product.code {
+                            reject(UCAPIError.error(code: errorCode, msg: product.message ?? "未知错误"))
+                        } else {
+                            resolve(product)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func listTokenProduct(
         _ tokenAddress: String,
         _ page: UInt,
         _ pageSize: UInt,
-        provider: MoyaProvider<UCTokenProductService>,
-        success: ((_ products: [APITokenProduct]) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: @escaping () -> Void) {
-        provider.request(
-            .list(token: tokenAddress, page: page, pageSize: pageSize)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let products = try response.mapArray(APITokenProduct.self)
-                    success?(products)
-                } catch {
+        provider: MoyaProvider<UCTokenProductService>) -> Promise<[APITokenProduct]> {
+        return Promise<[APITokenProduct]> (in: .background, { resolve, reject, _ in
+            provider.request(
+                .list(token: tokenAddress, page: page, pageSize: pageSize)
+            ){ result in
+                switch result {
+                case let .success(response):
                     do {
-                        let err = try response.mapObject(APIResponse.self)
-                        if let errorCode = err.code {
-                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
-                        } else {
-                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
-                        }
+                        let products = try response.mapArray(APITokenProduct.self)
+                        resolve(products)
                     } catch {
-                        if response.statusCode == 200 {
-                            success?([])
-                        } else {
-                            failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        do {
+                            let err = try response.mapObject(APIResponse.self)
+                            if let errorCode = err.code {
+                                reject(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                            } else {
+                                reject(UCAPIError.error(code: 0, msg: "未知错误"))
+                            }
+                        } catch {
+                            if response.statusCode == 200 {
+                                resolve([])
+                            } else {
+                                reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                            }
                         }
                     }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete()
-        }
+        })
     }
     
     static func getTokenProduct(
         _ address: String,
-        provider: MoyaProvider<UCTokenProductService>,
-        success: ((_ product: APITokenProduct) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .info(address: address)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let product = try response.mapObject(APITokenProduct.self)
-                    if let errorCode = product.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: product.message ?? "未知错误"))
-                    } else {
-                        success?(product)
+        provider: MoyaProvider<UCTokenProductService>) -> Promise<APITokenProduct> {
+        return Promise<APITokenProduct>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .info(address: address)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let product = try response.mapObject(APITokenProduct.self)
+                        if let errorCode = product.code {
+                            reject(UCAPIError.error(code: errorCode, msg: product.message ?? "未知错误"))
+                        } else {
+                            resolve(product)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
 }

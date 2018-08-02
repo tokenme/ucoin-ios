@@ -7,6 +7,7 @@
 //
 
 import Moya
+import Hydra
 
 enum UCOrderService {
     case create(address: String)
@@ -70,59 +71,55 @@ extension UCOrderService: TargetType, AccessTokenAuthorizable {
 extension UCOrderService {
     static func createOrder(
         _ productAddress: String,
-        provider: MoyaProvider<UCOrderService>,
-        success: ((_ order: APIOrder) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .create(address: productAddress)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let order = try response.mapObject(APIOrder.self)
-                    if let errorCode = order.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: order.message ?? "未知错误"))
-                    } else {
-                        success?(order)
+        provider: MoyaProvider<UCOrderService>) -> Promise<APIOrder> {
+        return Promise<APIOrder>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .create(address: productAddress)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let order = try response.mapObject(APIOrder.self)
+                        if let errorCode = order.code {
+                            reject(UCAPIError.error(code: errorCode, msg: order.message ?? "未知错误"))
+                        } else {
+                            resolve(order)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func getOrder(
         _ orderId: UInt64,
         _ productAddress: String,
-        provider: MoyaProvider<UCOrderService>,
-        success: ((_ order: APIOrder) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .info(id: orderId, product: productAddress)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let order = try response.mapObject(APIOrder.self)
-                    if let errorCode = order.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: order.message ?? "未知错误"))
-                    } else {
-                        success?(order)
+        provider: MoyaProvider<UCOrderService>) -> Promise<APIOrder> {
+        return Promise<APIOrder>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .info(id: orderId, product: productAddress)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let order = try response.mapObject(APIOrder.self)
+                        if let errorCode = order.code {
+                            reject(UCAPIError.error(code: errorCode, msg: order.message ?? "未知错误"))
+                        } else {
+                            resolve(order)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func listOrders(
@@ -130,38 +127,36 @@ extension UCOrderService {
         _ ownerType: UInt8,
         _ page: UInt,
         _ pageSize: UInt,
-        provider: MoyaProvider<UCOrderService>,
-        success: ((_ orders: [APIOrder]) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: @escaping () -> Void) {
-        provider.request(
-            .list(product: productAddress, ownerType: ownerType, page: page, pageSize: pageSize)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let orders = try response.mapArray(APIOrder.self)
-                    success?(orders)
-                } catch {
+        provider: MoyaProvider<UCOrderService>) -> Promise<[APIOrder]> {
+        return Promise<[APIOrder]>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .list(product: productAddress, ownerType: ownerType, page: page, pageSize: pageSize)
+            ){ result in
+                switch result {
+                case let .success(response):
                     do {
-                        let err = try response.mapObject(APIResponse.self)
-                        if let errorCode = err.code {
-                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
-                        } else {
-                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
-                        }
+                        let orders = try response.mapArray(APIOrder.self)
+                        resolve(orders)
                     } catch {
-                        if response.statusCode == 200 {
-                            success?([])
-                        } else {
-                            failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        do {
+                            let err = try response.mapObject(APIResponse.self)
+                            if let errorCode = err.code {
+                                reject(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                            } else {
+                                reject(UCAPIError.error(code: 0, msg: "未知错误"))
+                            }
+                        } catch {
+                            if response.statusCode == 200 {
+                                resolve([])
+                            } else {
+                                reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                            }
                         }
                     }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete()
-        }
+        })
     }
 }

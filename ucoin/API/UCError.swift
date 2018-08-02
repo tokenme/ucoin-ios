@@ -18,6 +18,8 @@ enum UCAPIResponseType: Int {
     case notEnoughTokenProduct = 601
     case notEnoughTokenTask = 700
     case duplicateEvidence = 701
+    case tokenUnderConstruction = 800
+    case productUnderConstruction = 801
 }
 
 enum UCAPIError: Error, CustomStringConvertible {
@@ -32,7 +34,10 @@ enum UCAPIError: Error, CustomStringConvertible {
     case notEnoughTokenProduct
     case notEnoughTokenTask
     case duplicateEvidence
+    case tokenUnderConstruction
+    case productUnderConstruction
     case unknown(msg: String)
+    case ignore
     
     var description : String {
         switch self {
@@ -48,7 +53,10 @@ enum UCAPIError: Error, CustomStringConvertible {
         case .notEnoughTokenProduct: return "已售罄"
         case .notEnoughTokenTask: return "超过参与人数上限"
         case .duplicateEvidence: return "请勿重复提交证明"
+        case .tokenUnderConstruction: return "代币未创建完成，请等待"
+        case .productUnderConstruction: return "代币权益未创建完成，请等待"
         case .unknown(let msg): return msg
+        case .ignore: return "ignore"
         }
     }
 }
@@ -79,6 +87,10 @@ extension UCAPIError {
                 return UCAPIError.notEnoughTokenTask
             case .duplicateEvidence:
                 return UCAPIError.duplicateEvidence
+            case .tokenUnderConstruction:
+                return UCAPIError.tokenUnderConstruction
+            case .productUnderConstruction:
+                return UCAPIError.productUnderConstruction
             }
         }
         return UCAPIError.unknown(msg: msg)

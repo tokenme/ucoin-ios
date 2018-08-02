@@ -11,6 +11,7 @@ import PhoneNumberKit
 import CountryPickerView
 import Moya
 import SwiftyUserDefaults
+import Hydra
 
 class LoginViewController: CustomTransitionViewController {
     
@@ -30,7 +31,11 @@ class LoginViewController: CustomTransitionViewController {
     private var countryCode: String = "+86"
     private let phoneNumberKit = PhoneNumberKit()
     
+    private var isLogining = false
+    private var loadingUserInfo = false
+    
     private var authServiceProvider = MoyaProvider<UCAuthService>(plugins: [networkActivityPlugin])
+    private var userServiceProvider = MoyaProvider<UCUserService>(plugins: [networkActivityPlugin, AccessTokenPlugin(tokenClosure: AccessTokenClosure())])
     
     //=============
     // MARK: - denit
@@ -41,9 +46,15 @@ class LoginViewController: CustomTransitionViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.navigationBar.isTranslucent = true
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
+        }
         let cpv = CountryPickerView(frame: CGRect(x: 0, y: 0, width: 125, height: 20))
         cpv.setCountryByPhoneCode(self.countryCode)
         cpv.delegate = self
@@ -54,7 +65,14 @@ class LoginViewController: CustomTransitionViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.setNavigationBarHidden(true, animated: animated)
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.setNavigationBarHidden(true, animated: animated)
+        }
     }
     
     static func instantiate() -> LoginViewController
@@ -66,6 +84,9 @@ class LoginViewController: CustomTransitionViewController {
     // MARK: IBActions
     //================
     @IBAction private func login() {
+        if isLogining {
+            return
+        }
         var valid: Bool = true
         valid = self.verifyTelephone()
         if !self.verifyPassword() {
@@ -77,49 +98,66 @@ class LoginViewController: CustomTransitionViewController {
         let country = UInt(self.countryCode.trimmingCharacters(in: CharacterSet(charactersIn: "+")))
         let mobile = self.telephoneTextField.text!
         let passwd = self.passwordTextfield.text!
+        self.isLogining = true
+        
         self.loginButton.startAnimation()
-        self.authServiceProvider.request(
-            .login(
-                country:country!,
-                mobile: mobile,
-                password: passwd
-            )
-        ){ [weak self] result in
+        async({[weak self] _ in
             guard let weakSelf = self else {
                 return
             }
-            switch result {
-            case let .success(response):
-                do {
-                    let token = try response.mapObject(APIAccessToken.self)
-                    if token.code ?? 0 > 0 {
-                        DispatchQueue.main.async {
-                            weakSelf.loginButton.stopAnimation(animationStyle: .shake, completion: {})
-                            UCAlert.showAlert(imageName: "Error", title: "错误", desc: token.message ?? "Unknown Error", closeBtn: "关闭")
-                        }
-                        return
-                    }
-                    Defaults[.accessToken] = DefaultsAccessToken.init(token: token.token!, expire: token.expire!)
-                    Defaults.synchronize()
-                    DispatchQueue.main.async {
-                        weakSelf.loginButton.stopAnimation(animationStyle: .expand, completion: {
-                            weakSelf.delegate?.loginSucceeded(token: token)
-                            weakSelf.navigationController?.popViewController(animated: true)
-                        })
-                    }
-                } catch {
-                    DispatchQueue.main.async {
-                        weakSelf.loginButton.stopAnimation(animationStyle: .shake, completion: {})
-                        UCAlert.showAlert(imageName: "Error", title: "错误", desc: "解析错误", closeBtn: "关闭")
-                    }
-                }
-            case let .failure(error):
-                DispatchQueue.main.async {
-                    weakSelf.loginButton.stopAnimation(animationStyle: .shake, completion: {})
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.errorDescription!, closeBtn: "关闭")
-                }
+            let _ = try ..UCAuthService.doLogin(
+                country: country!,
+                mobile: mobile,
+                password: passwd,
+                provider: weakSelf.authServiceProvider)
+            let _ = try ..weakSelf.getUserInfo()
+        }).then(in: .main, {[weak self] user in
+            guard let weakSelf = self else {
+                return
             }
-        }
+            weakSelf.loginButton.stopAnimation(animationStyle: .expand, completion: {
+                weakSelf.delegate?.loginSucceeded(token: nil)
+                weakSelf.navigationController?.popViewController(animated: true)
+            })
+        }).catch(in: .main, {[weak self] error in
+            switch error as! UCAPIError {
+            case .ignore:
+                return
+            default: break
+            }
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.loginButton.stopAnimation(animationStyle: .shake, completion: {})
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: {[weak self]  in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.loadingUserInfo = false
+            weakSelf.isLogining = false
+        })
+    }
+    
+    private func getUserInfo() -> Promise<APIUser> {
+        return Promise<APIUser> (in: .background, {[weak self] resolve, reject, _ in
+            guard let weakSelf = self else {
+                reject(UCAPIError.ignore)
+                return
+            }
+            if weakSelf.loadingUserInfo {
+                reject(UCAPIError.ignore)
+            }
+            weakSelf.loadingUserInfo = true
+            UCUserService.getUserInfo(
+                false,
+                provider: weakSelf.userServiceProvider)
+            .then(in: .background, {user in
+                    resolve(user)
+            }).catch(in: .background, { error in
+                reject(error)
+            })
+        })
     }
 }
 
@@ -210,6 +248,6 @@ extension LoginViewController: CountryPickerViewDataSource {
 
 public protocol LoginViewDelegate: NSObjectProtocol {
     /// Called when the user selects a country from the list.
-    func loginSucceeded(token: APIAccessToken)
+    func loginSucceeded(token: APIAccessToken?)
 }
 

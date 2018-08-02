@@ -20,7 +20,7 @@ public class APIToken: APIResponse {
     var circulatingSupply: UInt64?
     var totalHolders: UInt64?
     var totalTransfers: UInt64?
-    var txStatus: UInt?
+    var txStatus: Int?
     var balance: UInt64?
     var desc: String?
     var logo: String?

@@ -22,7 +22,14 @@ fileprivate let DefaultLogoImage = UIImage(color: .darkGray)
 
 class TokenHeaderViewController: UIViewController, Reusable {
     
-    weak private var user: APIUser?
+    private var user: APIUser? {
+        get {
+            if let userInfo: DefaultsUser = Defaults[.user] {
+                return APIUser.init(user: userInfo)
+            }
+            return nil
+        }
+    }
     weak private var token: APIToken?
     weak public var delegate: TokenViewDelegate?
     
@@ -74,10 +81,6 @@ class TokenHeaderViewController: UIViewController, Reusable {
             self.symbolLabel.text = nil
             self.bgImageView.backgroundColor = UIColor.darkGray
         }
-    }
-    
-    public func setUser(_ user: APIUser?) {
-        self.user = user
     }
     
     //=============

@@ -14,6 +14,7 @@ import Toucan
 import Moya
 import YPImagePicker
 import Qiniu
+import Hydra
 
 fileprivate let DefaultImageWidth = 320
 
@@ -78,7 +79,7 @@ class CreateTokenTaskEvidenceViewController: FormViewController {
         guard let token = task.token else {
             return
         }
-        self.navigationItem.title = "提交\(token.symbol ?? "")代币任务证明"
+        self.navigationItem.title = "提交\(token.symbol ?? "")任务证明"
         
         let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(createTokenTaskEvidence))
         self.navigationItem.rightBarButtonItem = saveButton
@@ -126,6 +127,10 @@ class CreateTokenTaskEvidenceViewController: FormViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
             navigationController.navigationBar.isTranslucent = false
             navigationController.setNavigationBarHidden(false, animated: animated)
         }
@@ -157,101 +162,87 @@ extension CreateTokenTaskEvidenceViewController {
         self.submitting = true
         self.spinner.start()
         if self.pickedImages.count > 0 {
-            UCQiniuService.getTokenTaskEvidence(
-                task.id!,
-                self.pickedImages.count,
-                provider: self.qiniuServiceProvider,
-                success: {[weak self] upTokens in
-                    guard let weakSelf = self else {
-                        return
+            async({[weak self] _ -> APITokenTaskEvidence in
+                guard let weakSelf = self else {
+                    throw UCAPIError.ignore
+                }
+                let upTokens = try! ..UCQiniuService.getTokenTaskEvidence(
+                    task.id!,
+                    weakSelf.pickedImages.count,
+                    provider: weakSelf.qiniuServiceProvider)
+                let promises = upTokens.map { return weakSelf.uploadImage($0) }
+                let _ = try! ..all(promises)
+                var images: [String] = []
+                for upToken in upTokens {
+                    if !upToken.uploaded {
+                        continue
                     }
-                    for upToken in upTokens {
-                        weakSelf.uploadImage(upToken, success: { [weak weakSelf] () -> Void in
-                            guard let weakSelfSub = weakSelf else {
-                                return
-                            }
-                            var images: [String] = []
-                            for upToken in upTokens {
-                                if !upToken.uploaded {
-                                    continue
-                                }
-                                if let link = upToken.link {
-                                    images.append(link)
-                                }
-                            }
-                            evidence.images = images
-                            weakSelfSub.doCreateTokenTaskEvidence(evidence)
-                        })
+                    if let link = upToken.link {
+                        images.append(link)
                     }
-                },
-                failed: {[weak self] error in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    DispatchQueue.main.async {
-                        UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                        weakSelf.spinner.stop()
-                    }
-                },complete: {[weak self] in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    weakSelf.submitting = false
+                }
+                evidence.images = images
+                let createdEvidence = try! ..UCTokenTaskEvidenceService.createEvidence(
+                    evidence,
+                    provider: weakSelf.tokenTaskEvidenceServiceProvider)
+                return createdEvidence
+            }).then(in: .main, {[weak self] evidence in
+                guard let weakSelf = self else {
+                    return
+                }
+                UCAlert.showAlert(imageName: "Success", title: "提交成功", desc: "请耐心等待项目方处理", closeBtn: "关闭")
+                weakSelf.navigationController?.popViewController(animated: true)
+            }).catch(in: .main, {error in
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }).always(in: .main, body: {[weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.submitting = false
+                weakSelf.spinner.stop()
             })
         } else {
-            self.doCreateTokenTaskEvidence(evidence)
+            UCTokenTaskEvidenceService.createEvidence(
+                evidence,
+                provider: self.tokenTaskEvidenceServiceProvider)
+            .then(in: .main, {[weak self] evidence in
+                guard let weakSelf = self else {
+                    return
+                }
+                UCAlert.showAlert(imageName: "Success", title: "提交成功", desc: "请耐心等待项目方处理", closeBtn: "关闭")
+                weakSelf.navigationController?.popViewController(animated: true)
+            }).catch(in: .main, {error in
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }).always(in: .main, body: {[weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.submitting = false
+                weakSelf.spinner.stop()
+            })
         }
     }
     
-    private func uploadImage(_ upToken: APIQiniu, success:@escaping ()->Void) {
-        let magager = QiniuManager.sharedInstance
-        let totalTasks = self.pickedImages.count
-        let img = self.pickedImages[upToken.index!]
-        
-        magager.uploader.put(
-            img.data(),
-            key: upToken.key,
-            token: upToken.upToken,
-            complete: { [weak self](info: QNResponseInfo?, key: String?, resp: [AnyHashable : Any]?) -> Void in
-                guard let weakSelf = self else {
-                    return
-                }
-                if info!.isOK {
-                    upToken.uploaded = true
-                }
-                weakSelf.completeUploadTasks += 1
-                if weakSelf.completeUploadTasks >= totalTasks && !weakSelf.imagesUploaded {
-                    weakSelf.imagesUploaded = true
-                    success()
-                }
-            }, option: nil)
-    }
-    
-    private func doCreateTokenTaskEvidence(_ evidence: APITokenTaskEvidence) {
-        UCTokenTaskEvidenceService.createEvidence(
-            evidence,
-            provider: self.tokenTaskEvidenceServiceProvider,
-            success: {[weak self] evidence in
-                guard let weakSelf = self else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Success", title: "提交成功", desc: "请耐心等待项目方处理", closeBtn: "关闭")
-                    weakSelf.navigationController?.popViewController(animated: true)
-                }
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },complete: {[weak self] in
+    private func uploadImage(_ upToken: APIQiniu) -> Promise<APIQiniu> {
+        return Promise<APIQiniu>(in: .background, {[weak self] resolve, reject, _ in
+            let magager = QiniuManager.sharedInstance
             guard let weakSelf = self else {
+                reject(UCAPIError.ignore)
                 return
             }
-            weakSelf.completeUploadTasks = 0
-            weakSelf.imagesUploaded = false
-            weakSelf.submitting = false
-            weakSelf.spinner.stop()
+            let img = weakSelf.pickedImages[upToken.index!]
+            magager.uploader.put(
+                img.data(),
+                key: upToken.key,
+                token: upToken.upToken,
+                complete: { (info: QNResponseInfo?, key: String?, resp: [AnyHashable : Any]?) -> Void in
+                    if let ret = info?.isOK, ret {
+                        upToken.uploaded = true
+                        resolve(upToken)
+                        return
+                    }
+                    reject(UCAPIError.unknown(msg: "upload image failed"))
+                }, option: nil)
         })
     }
     

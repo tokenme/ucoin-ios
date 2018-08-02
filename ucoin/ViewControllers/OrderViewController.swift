@@ -17,7 +17,18 @@ fileprivate let DefaultFabHeight = 40.0
 
 class OrderViewController: UIViewController {
     
-    private var userInfo: APIUser?
+    private var userInfo: APIUser? {
+        get {
+            if let userInfo: DefaultsUser = Defaults[.user] {
+                if CheckValidAccessToken() {
+                    return APIUser.init(user: userInfo)
+                }
+                return nil
+            }
+            return nil
+        }
+    }
+    
     private var orderInfo: APIOrder?
     
     private let tableView = UITableView(frame: CGRect.zero, style: UITableViewStyle.plain)
@@ -46,6 +57,11 @@ class OrderViewController: UIViewController {
         self.transitioningDelegate = self
         
         if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            
             navigationController.navigationBar.isTranslucent = false
             navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
             
@@ -63,10 +79,6 @@ class OrderViewController: UIViewController {
         self.navigationItem.title = "订单详情"
         
         self.extendedLayoutIncludesOpaqueBars = true
-        
-        if let userInfo: DefaultsUser = Defaults[.user] {
-            self.userInfo = APIUser.init(user: userInfo)
-        }
         
         guard let orderInfo = self.orderInfo else {
             return
@@ -232,27 +244,21 @@ extension OrderViewController {
         UCOrderService.getOrder(
             tokenId,
             productAddress,
-            provider: self.orderServiceProvider,
-            success: {[weak self] order in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.setOrder(order)
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    weakSelf.spinner.stop()
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
-                }
+            provider: self.orderServiceProvider)
+        .then(in: .main, {[weak self] order in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.setOrder(order)
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.spinner.stop()
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
         })
     }
 }

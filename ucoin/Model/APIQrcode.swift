@@ -9,9 +9,12 @@
 import Foundation
 import ObjectMapper
 
-public class APIQrcode: APIResponse {
-    var method: String?
-    var data: String?
+public protocol APIQrcodeType {
+    var method: String? { get set }
+}
+
+public class APIQrcode: APIResponse, APIQrcodeType {
+    public var method: String?
     
     // MARK: JSON
     required public init?(map: Map) {
@@ -26,6 +29,5 @@ public class APIQrcode: APIResponse {
     override public func mapping(map: Map) {
         super.mapping(map: map)
         method <- map["method"]
-        data <- map["data"]
     }
 }

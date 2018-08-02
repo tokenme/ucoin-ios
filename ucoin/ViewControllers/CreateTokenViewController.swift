@@ -13,6 +13,7 @@ import Eureka
 import Toucan
 import Moya
 import Qiniu
+import Hydra
 
 fileprivate let DefaultLogoWidth = 180
 
@@ -145,8 +146,14 @@ class CreateTokenViewController: FormViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
             navigationController.navigationBar.isTranslucent = false
             navigationController.setNavigationBarHidden(false, animated: animated)
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
         }
     }
     
@@ -170,78 +177,90 @@ class CreateTokenViewController: FormViewController {
         self.submitting = true
         self.spinner.start()
         if let logo = token.logoImage {
-            UCQiniuService.getTokenLogo(
-                token.address,
-                provider: self.qiniuServiceProvider,
-                success: {[weak self] upToken in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    weakSelf.uploadImage(upToken, image: logo, success: { [weak weakSelf] (upToken) -> Void in
-                        guard let weakSelfSub = weakSelf else {
-                            return
-                        }
-                        token.logo = upToken.link
-                        weakSelfSub.doCreateToken(token)
-                    })
-                },
-                failed: {error in
-                    DispatchQueue.main.async {
-                        UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                    }
-                },complete: {[weak self] in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    weakSelf.submitting = false
-                    weakSelf.spinner.stop()
-            })
-        } else {
-            self.doCreateToken(token)
-        }
-    }
-    
-    private func doCreateToken(_ token: APIToken) {
-        self.submitting = true
-        
-        UCTokenService.createToken(
-            token,
-            provider: self.tokenServiceProvider,
-            success: {[weak self] token in
+            async({[weak self] _ -> APIToken in
+                guard let weakSelf = self else {
+                    throw UCAPIError.ignore
+                }
+                var upToken = try! ..UCQiniuService.getTokenLogo(
+                    token.address,
+                    provider: weakSelf.qiniuServiceProvider)
+                upToken = try! ..weakSelf.uploadImage(upToken, image: logo)
+                if let logo = upToken.link {
+                    token.logo = logo
+                }
+                let createdToken = try! ..weakSelf.doCreateToken(token)
+                return createdToken
+            }).then(in: .main, {[weak self] token in
                 guard let weakSelf = self else {
                     return
                 }
-                DispatchQueue.main.async {
-                    weakSelf.delegate?.tokenCreated(token: token)
-                    weakSelf.navigationController?.popViewController(animated: true)
-                }
-            },
-            failed: {error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-            },
-            complete: {[weak self] in
+                weakSelf.delegate?.tokenCreated(token: token)
+                weakSelf.navigationController?.popViewController(animated: true)
+            }).catch(in: .main, {error in
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }).always(in: .main, body: {
+                [weak self] in
                 guard let weakSelf = self else {
                     return
                 }
                 weakSelf.submitting = false
                 weakSelf.spinner.stop()
+            })
+        } else {
+            self.doCreateToken(token)
+            .then(in: .main, {[weak self] token in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.delegate?.tokenCreated(token: token)
+                weakSelf.navigationController?.popViewController(animated: true)
+            }).catch(in: .main, {error in
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }).always(in: .main, body: {
+                [weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.submitting = false
+                weakSelf.spinner.stop()
+            })
+        }
+    }
+    
+    private func doCreateToken(_ token: APIToken) -> Promise<APIToken> {
+        return Promise<APIToken>(in: .background, {[weak self] resolve, reject, _ in
+            guard let weakSelf = self else {
+                reject(UCAPIError.ignore)
+                return
+            }
+            weakSelf.submitting = true
+            UCTokenService.createToken(
+                token,
+                provider: weakSelf.tokenServiceProvider)
+            .then(in: .background, { token in
+                resolve(token)
+            }).catch(in: .background, { error in
+                reject(error)
+            })
         })
     }
     
-    private func uploadImage(_ upToken: APIQiniu, image: UIImage, success:@escaping (_ upToken: APIQiniu)->Void) {
-        let magager = QiniuManager.sharedInstance
-        magager.uploader.put(
-            image.data(),
-            key: upToken.key,
-            token: upToken.upToken,
-            complete: { (info: QNResponseInfo?, key: String?, resp: [AnyHashable : Any]?) -> Void in
-                if info!.isOK {
-                    upToken.uploaded = true
-                    success(upToken)
-                }
+    private func uploadImage(_ upToken: APIQiniu, image: UIImage) -> Promise<APIQiniu> {
+        return Promise<APIQiniu>(in: .background, { resolve, reject, _ in
+            let magager = QiniuManager.sharedInstance
+            magager.uploader.put(
+                image.data(),
+                key: upToken.key,
+                token: upToken.upToken,
+                complete: { (info: QNResponseInfo?, key: String?, resp: [AnyHashable : Any]?) -> Void in
+                    if let resp = info, resp.isOK {
+                        upToken.uploaded = true
+                        resolve(upToken)
+                        return
+                    }
+                    reject(UCAPIError.unknown(msg: "upload image failed"))
             }, option: nil)
+        })
     }
 }
 

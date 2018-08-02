@@ -24,10 +24,16 @@ blades:
     contents: true
   - source: images/error.png
     mount: ucoin/Assets.xcassets/Error.imageset
+  - source: images/warn.png
+    mount: ucoin/Assets.xcassets/Warn.imageset
   - source: images/success.png
     mount: ucoin/Assets.xcassets/Success.imageset
   - source: images/cancel.png
     mount: ucoin/Assets.xcassets/Cancel.imageset
+  - source: images/qrcode.png
+    mount: ucoin/Assets.xcassets/Qrcode.imageset
+  - source: images/barcode.png
+    mount: ucoin/Assets.xcassets/Barcode.imageset
   - source: images/gear.png
     mount: ucoin/Assets.xcassets/Gear.imageset
   - source: images/scan.png

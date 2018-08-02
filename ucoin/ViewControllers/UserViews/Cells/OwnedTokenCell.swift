@@ -20,6 +20,7 @@ final class OwnedTokenCell: UITableViewCell, NibReusable {
     @IBOutlet private weak var totalTansfersLabel: UILabel!
     @IBOutlet private weak var totalHoldersLabel: UILabel!
     @IBOutlet private weak var balanceLabel: UILabel!
+    @IBOutlet private weak var indicator: LinearActivityIndicatorView!
     
     private let logoDownloader = Moa()
     
@@ -38,6 +39,13 @@ final class OwnedTokenCell: UITableViewCell, NibReusable {
     func fill(_ token: APIToken) {
         nameLabel.text = token.name
         symbolLabel.text = token.symbol
+        if token.txStatus ?? 0 > 0 {
+            indicator.stopAnimating()
+            indicator.isHidden = true
+        } else {
+            indicator.startAnimating()
+            indicator.isHidden = false
+        }
         totalTansfersLabel.text = "交易量: \(token.totalTransfers ?? 0)"
         totalHoldersLabel.text = "持有人: \((token.totalHolders ?? 0) + 1)"
         var balance: Double = 0

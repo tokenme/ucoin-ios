@@ -25,7 +25,35 @@ fileprivate let DefaultAvatarImage = Toucan(image: UIImage(color: UIColor.darkGr
 class UserHeaderViewController: UIViewController, Reusable {
     weak public var delegate: UserHeaderViewDelegate?
     
-    weak private var userInfo: APIUser?
+    weak public var userInfo: APIUser? {
+        didSet {
+            if let user = self.userInfo {
+                if let avatarURL = user.avatar {
+                    avatarDownloader.onSuccess = {[weak self] image in
+                        guard let weakSelf = self else {
+                            return image
+                        }
+                        let outputImage = Toucan(image: image).resize(CGSize(width: DefaultAvatarWidth, height: DefaultAvatarWidth), fitMode: Toucan.Resize.FitMode.scale).maskWithEllipse(borderWidth: 0, borderColor: UIColor.clear).image
+                        
+                        weakSelf.avatarView.image = outputImage
+                        
+                        return outputImage
+                    }
+                    avatarDownloader.url = avatarURL
+                } else {
+                    self.avatarView.image = DefaultAvatarImage
+                }
+                self.loginButton.isHidden = true
+                self.nickLabel.isHidden = false
+                self.nickLabel.text = user.showName
+            } else {
+                self.avatarView.image = DefaultAvatarImage
+                self.loginButton.isHidden = false
+                self.nickLabel.text = nil
+                self.nickLabel.isHidden = true
+            }
+        }
+    }
     
     private let avatarLoadingView = NVActivityIndicatorView(frame: CGRect.init(x: 0, y: 0, width: DefaultAvatarWidth, height: DefaultAvatarWidth), type: NVActivityIndicatorType.ballScaleMultiple, color: UIColor.primaryBlue)
     private let avatarView = UIImageView(frame: CGRect(x: 0, y: 0, width: DefaultAvatarWidth, height: DefaultAvatarWidth))
@@ -35,36 +63,6 @@ class UserHeaderViewController: UIViewController, Reusable {
     private let loadingViewContainer = UIView()
     
     private let avatarDownloader = Moa()
-    
-    public func setUser(_ user: APIUser?) {
-        if let userInfo = user {
-            self.userInfo = userInfo
-            if let avatarURL = self.userInfo?.avatar {
-                avatarDownloader.onSuccess = {[weak self] image in
-                    guard let weakSelf = self else {
-                        return image
-                    }
-                    let outputImage = Toucan(image: image).resize(CGSize(width: DefaultAvatarWidth, height: DefaultAvatarWidth), fitMode: Toucan.Resize.FitMode.scale).maskWithEllipse(borderWidth: 0, borderColor: UIColor.clear).image
-                    
-                    weakSelf.avatarView.image = outputImage
-                    
-                    return outputImage
-                }
-                avatarDownloader.url = avatarURL
-            } else {
-                self.avatarView.image = DefaultAvatarImage
-            }
-            self.loginButton.isHidden = true
-            self.nickLabel.isHidden = false
-            self.nickLabel.text = userInfo.showName
-        } else {
-            self.userInfo = nil
-            self.avatarView.image = DefaultAvatarImage
-            self.loginButton.isHidden = false
-            self.nickLabel.text = nil
-            self.nickLabel.isHidden = true
-        }
-    }
     
     //=============
     // MARK: - denit

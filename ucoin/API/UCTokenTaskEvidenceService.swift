@@ -7,6 +7,7 @@
 //
 
 import Moya
+import Hydra
 
 enum UCTokenTaskEvidenceService {
     case create(evidence: APITokenTaskEvidence)
@@ -101,30 +102,28 @@ extension UCTokenTaskEvidenceService: TargetType, AccessTokenAuthorizable {
 extension UCTokenTaskEvidenceService {
     static func createEvidence(
         _ evidence: APITokenTaskEvidence,
-        provider: MoyaProvider<UCTokenTaskEvidenceService>,
-        success: ((_ evidence: APITokenTaskEvidence) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .create(evidence: evidence)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let evidence = try response.mapObject(APITokenTaskEvidence.self)
-                    if let errorCode = evidence.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: evidence.message ?? "未知错误"))
-                    } else {
-                        success?(evidence)
+        provider: MoyaProvider<UCTokenTaskEvidenceService>) -> Promise<APITokenTaskEvidence> {
+        return Promise<APITokenTaskEvidence>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .create(evidence: evidence)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let evidence = try response.mapObject(APITokenTaskEvidence.self)
+                        if let errorCode = evidence.code {
+                            reject(UCAPIError.error(code: errorCode, msg: evidence.message ?? "未知错误"))
+                        } else {
+                            resolve(evidence)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func listEvidence(
@@ -132,67 +131,63 @@ extension UCTokenTaskEvidenceService {
         _ approveStatus: Int8,
         _ page: UInt,
         _ pageSize: UInt,
-        provider: MoyaProvider<UCTokenTaskEvidenceService>,
-        success: ((_ evidences: [APITokenTaskEvidence]) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: @escaping () -> Void) {
-        provider.request(
-            .list(taskId: taskId, approveStatus: approveStatus, page: page, pageSize: pageSize)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let evidences = try response.mapArray(APITokenTaskEvidence.self)
-                    success?(evidences)
-                } catch {
+        provider: MoyaProvider<UCTokenTaskEvidenceService>) -> Promise<[APITokenTaskEvidence]> {
+        return Promise<[APITokenTaskEvidence]>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .list(taskId: taskId, approveStatus: approveStatus, page: page, pageSize: pageSize)
+            ){ result in
+                switch result {
+                case let .success(response):
                     do {
-                        let err = try response.mapObject(APIResponse.self)
-                        if let errorCode = err.code {
-                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
-                        } else {
-                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
-                        }
+                        let evidences = try response.mapArray(APITokenTaskEvidence.self)
+                        resolve(evidences)
                     } catch {
-                        if response.statusCode == 200 {
-                            success?([])
-                        } else {
-                            failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        do {
+                            let err = try response.mapObject(APIResponse.self)
+                            if let errorCode = err.code {
+                                reject(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                            } else {
+                                reject(UCAPIError.error(code: 0, msg: "未知错误"))
+                            }
+                        } catch {
+                            if response.statusCode == 200 {
+                                resolve([])
+                            } else {
+                                reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                            }
                         }
                     }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete()
-        }
+        })
     }
     
     static func approveEvidence(
         _ evidenceId: UInt64,
         approveStatus: Int8,
-        provider: MoyaProvider<UCTokenTaskEvidenceService>,
-        success: ((_ evidence: APITokenTaskEvidence) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)? ) {
-        provider.request(
-            .approve(evidenceId: evidenceId, approveStatus: approveStatus)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let evidence = try response.mapObject(APITokenTaskEvidence.self)
-                    if let errorCode = evidence.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: evidence.message ?? "未知错误"))
-                    } else {
-                        success?(evidence)
+        provider: MoyaProvider<UCTokenTaskEvidenceService>) -> Promise<APITokenTaskEvidence> {
+        return Promise<APITokenTaskEvidence>(in: .background, {resolve, reject, _ in
+            provider.request(
+                .approve(evidenceId: evidenceId, approveStatus: approveStatus)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let evidence = try response.mapObject(APITokenTaskEvidence.self)
+                        if let errorCode = evidence.code {
+                            reject(UCAPIError.error(code: errorCode, msg: evidence.message ?? "未知错误"))
+                        } else {
+                            resolve(evidence)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
 }

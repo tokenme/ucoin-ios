@@ -15,7 +15,18 @@ fileprivate let DefaultPageSize: UInt = 10
 
 class TokenProductViewController: UIViewController {
     
-    private var userInfo: APIUser?
+    private var userInfo: APIUser? {
+        get {
+            if let userInfo: DefaultsUser = Defaults[.user] {
+                if CheckValidAccessToken() {
+                    return APIUser.init(user: userInfo)
+                }
+                return nil
+            }
+            return nil
+        }
+    }
+    
     private var productAddress: String?
     private var tokenProduct: APITokenProduct?
     
@@ -89,10 +100,6 @@ class TokenProductViewController: UIViewController {
         }
         self.navigationItem.title = "代币权益"
         //self.extendedLayoutIncludesOpaqueBars = true
-        
-        if let userInfo: DefaultsUser = Defaults[.user] {
-            self.userInfo = APIUser.init(user: userInfo)
-        }
         
         if let tokenProduct = self.tokenProduct {
             if tokenProduct.isOwnedByUser(wallet: userInfo?.wallet) {
@@ -397,31 +404,25 @@ extension TokenProductViewController {
     private func getTokenProduct(_ address: String!) {
         UCTokenProductService.getTokenProduct(
             address,
-            provider: self.tokenProductServiceProvider,
-            success: {[weak self] product in
-                guard let weakSelf = self else {
-                    return
-                }
-                if weakSelf.tokenProduct == nil && product.isOwnedByUser(wallet: weakSelf.userInfo?.wallet) {
-                    let editButton = UIBarButtonItem(barButtonSystemItem: .edit, target: weakSelf, action: #selector(weakSelf.showEdit))
-                    weakSelf.navigationItem.rightBarButtonItem = editButton
-                }
-                weakSelf.setProduct(product)
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    weakSelf.spinner.stop()
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
-                }
+            provider: self.tokenProductServiceProvider)
+        .then(in: .main, {[weak self] product in
+            guard let weakSelf = self else {
+                return
+            }
+            if weakSelf.tokenProduct == nil && product.isOwnedByUser(wallet: weakSelf.userInfo?.wallet) {
+                let editButton = UIBarButtonItem(barButtonSystemItem: .edit, target: weakSelf, action: #selector(weakSelf.showEdit))
+                weakSelf.navigationItem.rightBarButtonItem = editButton
+            }
+            weakSelf.setProduct(product)
+        }).catch(in: .main,  { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.spinner.stop()
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
         })
     }
     
@@ -444,30 +445,25 @@ extension TokenProductViewController {
         creatingOrder = true
         UCOrderService.createOrder(
             address,
-            provider: self.orderServiceProvider,
-            success: { order in
-                let vc = OrderViewController.instantiate()
-                vc.setOrder(order)
-                DispatchQueue.main.async {
-                    self.navigationController?.pushViewController(vc, animated: true)
-                }
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.creatingOrder = false
-                DispatchQueue.main.async {
-                    weakSelf.spinner.stop()
-                    weakSelf.contentHeaderView.failedBuy()
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
-                }
+            provider: self.orderServiceProvider)
+        .then(in: .main, { [weak self] order in
+            guard let weakSelf = self else {
+                return
+            }
+            let vc = OrderViewController.instantiate()
+            vc.setOrder(order)
+            weakSelf.navigationController?.pushViewController(vc, animated: true)
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.creatingOrder = false
+            weakSelf.spinner.stop()
+            weakSelf.contentHeaderView.failedBuy()
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
         })
     }
     
@@ -486,37 +482,31 @@ extension TokenProductViewController {
             0,
             self.currentOrderPage,
             DefaultPageSize,
-            provider: self.orderServiceProvider,
-            success: {[weak self] orders in
-                guard let weakSelf = self else {
-                    return
-                }
-                if refresh {
-                    weakSelf.orders = orders
-                } else {
-                    weakSelf.orders.append(contentsOf: orders)
-                }
-                if orders.count > 0 && orders.count >= DefaultPageSize {
-                    weakSelf.currentOrderPage += 1
-                    weakSelf.ordersFooterState = .normal
-                } else {
-                    weakSelf.ordersFooterState = .noMoreData
-                }
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.isLoadingOrders = false
-                DispatchQueue.main.async {
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.onSegmentControlUpdated()
-                }
+            provider: self.orderServiceProvider)
+        .then(in: .main, {[weak self] orders in
+            guard let weakSelf = self else {
+                return
+            }
+            if refresh {
+                weakSelf.orders = orders
+            } else {
+                weakSelf.orders.append(contentsOf: orders)
+            }
+            if orders.count > 0 && orders.count >= DefaultPageSize {
+                weakSelf.currentOrderPage += 1
+                weakSelf.ordersFooterState = .normal
+            } else {
+                weakSelf.ordersFooterState = .noMoreData
+            }
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.isLoadingOrders = false
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.onSegmentControlUpdated()
         })
     }
 }

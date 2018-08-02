@@ -33,6 +33,8 @@ target 'ucoin' do
   pod 'FSPagerView'
   pod 'swiftScan', '~> 1.1'
   pod 'Bartinter'
+  pod 'CBPinEntryView', :git=>'https://github.com/vvit/CBPinEntryView.git', :branch=>'app'
+  pod 'HydraAsync'
 end
 
 post_install do |installer|

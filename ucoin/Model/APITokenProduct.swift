@@ -18,7 +18,7 @@ public class APITokenProduct: APIResponse {
     var totalSupply: UInt64?
     var startDate: Date?
     var endDate: Date?
-    var txStatus: UInt?
+    var txStatus: Int?
     var desc: String?
     var tags: [String]?
     var images: [String]?

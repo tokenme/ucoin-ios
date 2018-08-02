@@ -1,10 +1,12 @@
 PODS:
   - Alamofire (4.7.2)
   - Bartinter (0.0.2)
+  - CBPinEntryView (1.5.3)
   - CountryPickerView (2.1.0)
   - Eureka (4.1.1)
   - FSPagerView (0.7.1)
   - HappyDNS (0.3.14)
+  - HydraAsync (1.2.1)
   - ImageRow (3.1.0):
     - Eureka (~> 4.0)
   - IQKeyboardManagerSwift (6.0.3)
@@ -58,9 +60,11 @@ PODS:
 
 DEPENDENCIES:
   - Bartinter
+  - CBPinEntryView (from `https://github.com/vvit/CBPinEntryView.git`, branch `app`)
   - CountryPickerView (~> 2.1.0)
   - Eureka (~> 4.1)
   - FSPagerView
+  - HydraAsync
   - ImageRow (~> 3.1)
   - IQKeyboardManagerSwift (~> 6.0)
   - Kingfisher
@@ -96,6 +100,7 @@ SPEC REPOS:
     - Eureka
     - FSPagerView
     - HappyDNS
+    - HydraAsync
     - ImageRow
     - IQKeyboardManagerSwift
     - Kingfisher
@@ -127,13 +132,25 @@ SPEC REPOS:
     - WSTagsField
     - YPImagePicker
 
+EXTERNAL SOURCES:
+  CBPinEntryView:
+    :branch: app
+    :git: https://github.com/vvit/CBPinEntryView.git
+
+CHECKOUT OPTIONS:
+  CBPinEntryView:
+    :commit: 922716338fbfb8c514ab537adab0224bc476b6b6
+    :git: https://github.com/vvit/CBPinEntryView.git
+
 SPEC CHECKSUMS:
   Alamofire: e4fa87002c137ba2d8d634d2c51fabcda0d5c223
   Bartinter: 350b1d89faf569cd4c1ee8dc32465acf57eb0373
+  CBPinEntryView: a9fa8969f97b3ff0001d26bb770684270df7bcb8
   CountryPickerView: 25a85d08e993e2ed7d3f06d59bb66017851115ff
   Eureka: b88fb930e42c79f8c03c373d0fcdc28c1d6c50ed
   FSPagerView: 958aba39684e1573755ddcfcc29f7eebb8413cee
   HappyDNS: dc6a164ee81979093123c241c6353bcf0218add6
+  HydraAsync: 8f2ab62d57e140b4ca587ae0f66e1eb04e8e6965
   ImageRow: 1ea483078bfa3d880a7fc76fdfcddfd5f29a9e6b
   IQKeyboardManagerSwift: 04e8679f85e496bb2c474eeb9284052f1b3c391c
   Kingfisher: 976d828df2b24834c6a3f2fc4d82cdbd26552be1
@@ -165,6 +182,6 @@ SPEC CHECKSUMS:
   WSTagsField: 53055749c03769b2b297f2a629ba23a26931e3ff
   YPImagePicker: 724a4004e62db927deaaa2371cb7bde4e3b36708
 
-PODFILE CHECKSUM: 4aed9b5b907a6e8aeff335818eb1bba45f5f152c
+PODFILE CHECKSUM: 3e108c31cda1319df4479ed3a9cafe4807cbba02
 
 COCOAPODS: 1.5.3

@@ -12,6 +12,7 @@ import Reusable
 import SnapKit
 
 fileprivate let DefaultImageHeight = 80.0
+fileprivate let DefaultIndicatorHeight = 5.0
 
 final class TokenProductSimpleCell: UITableViewCell, Reusable {
     
@@ -23,6 +24,7 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
     private let totalSupplyLabel = UILabel()
     private let amountLabel = UILabel()
     private let imageGridView = FTImageGridView()
+    private let indicator = LinearActivityIndicatorView()
     
     private lazy var containerView: UIView = {
         let containerView = UIView()
@@ -49,6 +51,15 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
             maker.leading.equalToSuperview().offset(5)
             maker.trailing.equalToSuperview().offset(-5)
             maker.top.equalTo(titleLabel.snp.bottom).offset(8)
+        }
+        
+        indicator.frame = CGRect(x: 0.0, y: 0.0, width: Double(UIScreen.main.bounds.width), height: DefaultIndicatorHeight)
+        containerView.addSubview(indicator)
+        indicator.snp.remakeConstraints { (maker) -> Void in
+            maker.leading.equalTo(dateRangeLabel.snp.leading)
+            maker.trailing.equalToSuperview().offset(-16)
+            maker.top.equalTo(dateRangeLabel.snp.bottom).offset(8)
+            maker.height.equalTo(DefaultIndicatorHeight)
         }
         
         stackView.axis = .horizontal
@@ -149,7 +160,7 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         stackView.snp.remakeConstraints { (maker) -> Void in
             maker.leading.equalToSuperview().offset(28)
             maker.trailing.equalToSuperview().offset(-28)
-            maker.top.equalTo(dateRangeLabel.snp.bottom).offset(8)
+            maker.top.equalTo(indicator.snp.bottom).offset(8)
         }
         
         self.contentView.addSubview(containerView)
@@ -174,6 +185,41 @@ final class TokenProductSimpleCell: UITableViewCell, Reusable {
         let startDate = dateFormatter.string(from: product.startDate!)
         let endDate = dateFormatter.string(from: product.endDate!)
         dateRangeLabel.text = "有效期: \(startDate) - \(endDate)"
+        
+        if product.txStatus == 1 {
+            DispatchQueue.main.async {[weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.indicator.stopAnimating()
+                weakSelf.indicator.isHidden = true
+                weakSelf.indicator.snp.removeConstraints()
+                weakSelf.stackView.snp.remakeConstraints { (maker) -> Void in
+                    maker.leading.equalToSuperview().offset(28)
+                    maker.trailing.equalToSuperview().offset(-28)
+                    maker.top.equalTo(weakSelf.dateRangeLabel.snp.bottom).offset(8)
+                }
+            }
+        } else {
+            DispatchQueue.main.async {[weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.indicator.startAnimating()
+                weakSelf.indicator.isHidden = false
+                weakSelf.indicator.snp.remakeConstraints { (maker) -> Void in
+                    maker.leading.equalTo(weakSelf.dateRangeLabel.snp.leading)
+                    maker.trailing.equalToSuperview().offset(-16)
+                    maker.top.equalTo(weakSelf.dateRangeLabel.snp.bottom).offset(8)
+                    maker.height.equalTo(DefaultIndicatorHeight)
+                }
+                weakSelf.stackView.snp.remakeConstraints { (maker) -> Void in
+                    maker.leading.equalToSuperview().offset(16)
+                    maker.trailing.equalToSuperview().offset(-16)
+                    maker.top.equalTo(weakSelf.indicator.snp.bottom).offset(8)
+                }
+            }
+        }
         
         if let price = product.price {
             let numberFormatter = NumberFormatter()

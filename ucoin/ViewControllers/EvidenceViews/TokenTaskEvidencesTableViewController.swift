@@ -195,46 +195,37 @@ extension TokenTaskEvidencesTableViewController {
             approveStatus,
             self.currentEvidencePage,
             DefaultPageSize,
-            provider: self.tokenTaskEvidenceServiceProvider,
-            success: {[weak self] evidences in
-                guard let weakSelf = self else {
-                    return
-                }
-                if refresh {
-                    weakSelf.evidences = evidences
-                } else {
-                    weakSelf.evidences.append(contentsOf: evidences)
-                }
-                if evidences.count > 0 && evidences.count >= DefaultPageSize {
-                    weakSelf.currentEvidencePage += 1
-                    weakSelf.evidencesFooterState = .normal
-                } else {
-                    weakSelf.evidencesFooterState = .noMoreData
-                }
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.isLoadingEvidences = false
-                DispatchQueue.main.async {[weak self] in
-                    guard let weakSelf = self else {
-                        return
-                    }
-                    if weakSelf.evidences.count == 0 {
-                        weakSelf.refreshFooter.isHidden = true
-                    } else {
-                        weakSelf.refreshFooter.isHidden = false
-                    }
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.tableView.switchRefreshFooter(to: weakSelf.evidencesFooterState)
-                    weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
-                }
+            provider: self.tokenTaskEvidenceServiceProvider)
+        .then(in: .main, {[weak self] evidences in
+            guard let weakSelf = self else {
+                return
+            }
+            if refresh {
+                weakSelf.evidences = evidences
+            } else {
+                weakSelf.evidences.append(contentsOf: evidences)
+            }
+            if evidences.count > 0 && evidences.count >= DefaultPageSize {
+                weakSelf.currentEvidencePage += 1
+                weakSelf.evidencesFooterState = .normal
+            } else {
+                weakSelf.evidencesFooterState = .noMoreData
+            }
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.isLoadingEvidences = false
+            if weakSelf.evidences.count == 0 {
+                weakSelf.refreshFooter.isHidden = true
+            } else {
+                weakSelf.refreshFooter.isHidden = false
+            }
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.tableView.switchRefreshFooter(to: weakSelf.evidencesFooterState)
+            weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
         })
     }
 }

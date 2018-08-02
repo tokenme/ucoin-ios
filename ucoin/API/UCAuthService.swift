@@ -7,6 +7,8 @@
 //
 
 import Moya
+import SwiftyUserDefaults
+import Hydra
 
 enum UCAuthService {
     case sendCode(country: UInt, mobile: String)
@@ -57,3 +59,32 @@ extension UCAuthService: TargetType, AccessTokenAuthorizable {
     }
 }
 
+
+extension UCAuthService {
+    
+    static func doLogin(country: UInt, mobile: String, password: String, provider: MoyaProvider<UCAuthService>) -> Promise<APIAccessToken> {
+        return Promise<APIAccessToken> (in: .background, { resolve, reject, _ in
+            provider.request(
+                .login(country: country, mobile: mobile, password: password)
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let token = try response.mapObject(APIAccessToken.self)
+                        if let errorCode = token.code {
+                            reject(UCAPIError.error(code: errorCode, msg: token.message ?? "未知错误"))
+                        } else {
+                            Defaults[.accessToken] = DefaultsAccessToken.init(token: token.token!, expire: token.expire!)
+                            Defaults.synchronize()
+                            resolve(token)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                    }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
+                }
+            }
+        })
+    }
+}

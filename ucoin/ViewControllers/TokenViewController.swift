@@ -17,7 +17,18 @@ fileprivate let DefaultFabHeight = 40.0
 
 class TokenViewController: UIViewController {
     
-    private var userInfo: APIUser?
+    private var userInfo: APIUser? {
+        get {
+            if let userInfo: DefaultsUser = Defaults[.user] {
+                if CheckValidAccessToken() {
+                    return APIUser.init(user: userInfo)
+                }
+                return nil
+            }
+            return nil
+        }
+    }
+    
     private var tokenAddress: String?
     private var tokenInfo: APIToken?
     fileprivate var sectionsMap: [String] = ["stats", "entities"]
@@ -84,9 +95,15 @@ class TokenViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.transitioningDelegate = self
-        self.navigationController?.navigationBar.isTranslucent = true
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
+        }
         self.extendedLayoutIncludesOpaqueBars = true
         self.segmentControl.frame = CGRect(x: 0, y: 0, width: tableView.bounds.size.width, height:TokenSegmentView.height)
         self.segmentControl.delegate = self
@@ -106,8 +123,14 @@ class TokenViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.navigationBar.isTranslucent = true
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
         self.tableView.reloadDataWithAutoSizingCellWorkAround()
         self.updatedImageColors(self.headerColors)
     }
@@ -134,6 +157,7 @@ class TokenViewController: UIViewController {
         self.tableView.dataSource = self
         
         self.tableView.register(cellType: TokenStatsTableCell.self)
+        self.tableView.register(cellType: TokenActionsTableCell.self)
         self.tableView.register(cellType: TokenDescriptionCell.self)
         self.tableView.register(cellType: EmptyCell.self)
         self.tableView.register(cellType: EmptyTokenOwnedDescriptionCell.self)
@@ -147,15 +171,6 @@ class TokenViewController: UIViewController {
         self.tableView.rowHeight = UITableViewAutomaticDimension
         let top = (self.navigationController?.navigationBar.bounds.height)! + 5
         self.tableView.contentInset = UIEdgeInsets(top: -1 * top, left: 0, bottom: 0, right: 0)
-        
-        if let userInfo: DefaultsUser = Defaults[.user] {
-            self.userInfo = APIUser.init(user: userInfo)
-            self.tokenHeaderViewController.setUser(self.userInfo)
-        } else if CheckValidAccessToken() {
-            //self.getUserInfo(false)
-        } else {
-            self.tokenHeaderViewController.setUser(nil)
-        }
         
         self.tableView.tableHeaderView = self.tokenHeaderViewController.view
         
@@ -200,9 +215,9 @@ class TokenViewController: UIViewController {
             guard let tAddress = tokenAddress else {
                 return
             }
-            if weakSelf.currentSegment == 1 {
+            if weakSelf.currentSegment == 1 && weakSelf.productsFooterState != .noMoreData{
                 weakSelf.getTokenProducts(tAddress, refresh: false)
-            } else if weakSelf.currentSegment == 2 {
+            } else if weakSelf.currentSegment == 2 && weakSelf.tasksFooterState != .noMoreData {
                 weakSelf.getTokenTasks(tAddress, refresh: false)
             } else {
                 DispatchQueue.main.async {
@@ -315,6 +330,13 @@ class TokenViewController: UIViewController {
     }
     
     @objc private func onFabButtonClick() {
+        if self.tokenInfo?.txStatus ?? 0 == 0 {
+            UCAlert.showAlert(imageName: "Warn", title: "警告", desc: "代币未创建完成，请等待", closeBtn: "关闭")
+            return
+        } else if self.tokenInfo?.txStatus ?? 0 == 1 {
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: "代币创建失败", closeBtn: "关闭")
+            return
+        }
         if currentSegment == 1 {
             showCreateTokenProduct()
         }else if currentSegment == 2 {
@@ -351,7 +373,7 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch self.sectionsMap[section] {
         case "stats":
-            return 1
+            return 2
         case "entities":
             if currentSegment == 1 {
                 if self.products.count == 0 {
@@ -380,8 +402,14 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
         }
         switch self.sectionsMap[indexPath.section] {
         case "stats":
-            let cell = tableView.dequeueReusableCell(for: indexPath) as TokenStatsTableCell
-            cell.fill(self.tokenInfo)
+            if indexPath.row == 0 {
+                let cell = tableView.dequeueReusableCell(for: indexPath) as TokenStatsTableCell
+                cell.fill(self.tokenInfo)
+                return cell
+            }
+            let cell = tableView.dequeueReusableCell(for: indexPath) as TokenActionsTableCell
+            cell.delegate = self
+            cell.fill()
             return cell
         case "entities":
             if currentSegment == 1 {
@@ -442,7 +470,6 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
                 if let _ = self.tokenInfo?.desc {
                     let vc = ShowTokenDescriptionViewController()
                     vc.tokenInfo = self.tokenInfo
-                    vc.userInfo = self.userInfo
                     vc.delegate = self
                     DispatchQueue.main.async {
                         self.navigationController?.pushViewController(vc, animated: true)
@@ -450,7 +477,15 @@ extension TokenViewController: UITableViewDelegate, UITableViewDataSource {
                 }
             } else if currentSegment == 1 && self.products.count > 0 {
                 let vc = TokenProductViewController.instantiate()
-                vc.setProduct(self.products[indexPath.row])
+                let product = self.products[indexPath.row]
+                if product.txStatus ?? 0 == 0 {
+                    UCAlert.showAlert(imageName: "Warn", title: "警告", desc: "未创建完成，请等待", closeBtn: "关闭")
+                    return
+                }else if product.txStatus == -1 {
+                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: "创建失败", closeBtn: "关闭")
+                    return
+                }
+                vc.setProduct(product)
                 DispatchQueue.main.async {
                     self.navigationController?.pushViewController(vc, animated: true)
                 }
@@ -534,32 +569,38 @@ extension TokenViewController: UIViewControllerTransitioningDelegate {
     
 }
 
+extension TokenViewController: LoginViewDelegate {
+    func loginSucceeded(token: APIAccessToken?) {
+        self.onSegmentControlUpdated()
+    }
+}
+
 extension TokenViewController {
+    
+    private func showLogin() {
+        let loginVC = LoginViewController.instantiate()
+        loginVC.delegate = self
+        self.navigationController?.pushViewController(loginVC, animated: true)
+    }
     
     private func getToken(_ tokenAddress: String) {
         UCTokenService.getInfo(
             tokenAddress,
-            provider: self.tokenServiceProvider,
-            success: {[weak self] token in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.setToken(token)
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    weakSelf.spinner.stop()
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
-                }
+            provider: self.tokenServiceProvider)
+        .then(in: .main, {[weak self] token in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.setToken(token)
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.spinner.stop()
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
         })
     }
     
@@ -573,37 +614,31 @@ extension TokenViewController {
             tokenAddress,
             self.currentProductPage,
             DefaultPageSize,
-            provider: self.tokenProductServiceProvider,
-            success: {[weak self] products in
-                guard let weakSelf = self else {
-                    return
-                }
-                if refresh {
-                    weakSelf.products = products
-                } else {
-                    weakSelf.products.append(contentsOf: products)
-                }
-                if products.count > 0 && products.count >= DefaultPageSize {
-                    weakSelf.currentProductPage += 1
-                    weakSelf.productsFooterState = .normal
-                } else {
-                    weakSelf.productsFooterState = .noMoreData
-                }
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.isLoadingProducts = false
-                DispatchQueue.main.async {
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.onSegmentControlUpdated()
-                }
+            provider: self.tokenProductServiceProvider)
+        .then(in: .main, {[weak self] products in
+            guard let weakSelf = self else {
+                return
+            }
+            if refresh {
+                weakSelf.products = products
+            } else {
+                weakSelf.products.append(contentsOf: products)
+            }
+            if products.count > 0 && products.count >= DefaultPageSize {
+                weakSelf.currentProductPage += 1
+                weakSelf.productsFooterState = .normal
+            } else {
+                weakSelf.productsFooterState = .noMoreData
+            }
+        }).catch(in: .main,  { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.isLoadingProducts = false
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.onSegmentControlUpdated()
         })
     }
     
@@ -617,37 +652,31 @@ extension TokenViewController {
             tokenAddress,
             self.currentTaskPage,
             DefaultPageSize,
-            provider: self.tokenTaskServiceProvider,
-            success: {[weak self] tasks in
-                guard let weakSelf = self else {
-                    return
-                }
-                if refresh {
-                    weakSelf.tasks = tasks
-                } else {
-                    weakSelf.tasks.append(contentsOf: tasks)
-                }
-                if tasks.count > 0 && tasks.count >= DefaultPageSize {
-                    weakSelf.currentTaskPage += 1
-                    weakSelf.tasksFooterState = .normal
-                } else {
-                    weakSelf.tasksFooterState = .noMoreData
-                }
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.isLoadingTasks = false
-                DispatchQueue.main.async {
-                    weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
-                    weakSelf.onSegmentControlUpdated()
-                }
+            provider: self.tokenTaskServiceProvider)
+        .then(in: .main, {[weak self] tasks in
+            guard let weakSelf = self else {
+                return
+            }
+            if refresh {
+                weakSelf.tasks = tasks
+            } else {
+                weakSelf.tasks.append(contentsOf: tasks)
+            }
+            if tasks.count > 0 && tasks.count >= DefaultPageSize {
+                weakSelf.currentTaskPage += 1
+                weakSelf.tasksFooterState = .normal
+            } else {
+                weakSelf.tasksFooterState = .noMoreData
+            }
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.isLoadingTasks = false
+            weakSelf.tableView.switchRefreshHeader(to: .normal(.success, 0.3))
+            weakSelf.onSegmentControlUpdated()
         })
     }
 }
@@ -656,36 +685,55 @@ extension TokenViewController: TokenViewDelegate {
     func updatedImageColors(_ colors: UIImageColors?) {
         self.headerColors = colors
         self.refreshHeader.backgroundColor = UIColor.clear
-        DispatchQueue.main.async {
-            if let colors = self.headerColors {
-                self.navigationController?.navigationBar.tintColor = colors.background
-                self.refreshHeader.tintColor = colors.background
+        DispatchQueue.main.async {[weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            if weakSelf.navigationItem.title == nil, let colors = weakSelf.headerColors {
+                weakSelf.navigationController?.navigationBar.tintColor = colors.background
+                weakSelf.refreshHeader.tintColor = colors.background
+            } else if weakSelf.navigationItem.title != nil {
+                weakSelf.navigationController?.navigationBar.tintColor = UIColor.primaryBlue
+                weakSelf.refreshHeader.tintColor = .primaryBlue
             } else {
-                self.navigationController?.navigationBar.tintColor = UIColor.white
-                self.refreshHeader.tintColor = .primaryBlue
+                weakSelf.navigationController?.navigationBar.tintColor = UIColor.white
+                weakSelf.refreshHeader.tintColor = .primaryBlue
             }
         }
     }
     
     func showEditDescription() {
+        if self.userInfo == nil {
+            self.showLogin()
+            return
+        }
         let editorVC = EditTokenDescriptionViewController()
         editorVC.tokenInfo = self.tokenInfo
         editorVC.delegate = self
-        DispatchQueue.main.async {
-            self.navigationController?.pushViewController(editorVC, animated: true)
+        DispatchQueue.main.async {[weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.navigationController?.pushViewController(editorVC, animated: true)
         }
     }
     
     func shouldReload() {
-        DispatchQueue.main.async {
-            self.tableView.reloadDataWithAutoSizingCellWorkAround()
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
         }
     }
     
     func updatedTokenDescription(_ desc: String) {
         self.tokenInfo?.desc = desc
-        DispatchQueue.main.async {
-            self.tableView.reloadDataWithAutoSizingCellWorkAround()
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
         }
     }
     
@@ -693,10 +741,12 @@ extension TokenViewController: TokenViewDelegate {
         if let _ = self.tokenInfo?.desc {
             let vc = ShowTokenDescriptionViewController()
             vc.tokenInfo = self.tokenInfo
-            vc.userInfo = self.userInfo
             vc.delegate = self
-            DispatchQueue.main.async {
-                self.navigationController?.pushViewController(vc, animated: true)
+            DispatchQueue.main.async { [weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.navigationController?.pushViewController(vc, animated: true)
             }
         }
     }
@@ -707,20 +757,34 @@ extension TokenViewController: TokenViewDelegate {
     }
     
     func showCreateTokenProduct() {
+        if self.userInfo == nil {
+            self.showLogin()
+            return
+        }
         let vc = CreateTokenProductViewController.instantiate()
         vc.tokenInfo = self.tokenInfo
         vc.delegate = self
-        DispatchQueue.main.async {
-            self.navigationController?.pushViewController(vc, animated: true)
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.navigationController?.pushViewController(vc, animated: true)
         }
     }
     
     func showCreateTokenTask() {
+        if self.userInfo == nil {
+            self.showLogin()
+            return
+        }
         let vc = CreateTokenTaskViewController.instantiate()
         vc.tokenInfo = self.tokenInfo
         vc.delegate = self
-        DispatchQueue.main.async {
-            self.navigationController?.pushViewController(vc, animated: true)
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.navigationController?.pushViewController(vc, animated: true)
         }
     }
 }
@@ -754,5 +818,46 @@ extension TokenViewController: CreateTokenTaskDelegate {
         }
         self.currentTaskPage = 0
         self.getTokenTasks(tAddress, refresh: true)
+    }
+}
+
+extension TokenViewController: TokenActionsTableCellDelegate {
+    func showPay() {
+        guard let userInfo = self.userInfo else {
+            self.showLogin()
+            return
+        }
+        if userInfo.canPay == 1 {
+            
+        } else {
+            let vc = SettingPaymentPasswdViewController.instantiate()
+            DispatchQueue.main.async { [weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.present(vc, animated: true, completion: nil)
+            }
+        }
+    }
+    
+    func showCollect() {
+        let vc = QRCodeCollectViewController.instantiate()
+        vc.tokenInfo = self.tokenInfo
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+    
+    func showScan() {
+        let vc = ScanViewController()
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.present(vc, animated: true, completion: nil)
+        }
     }
 }

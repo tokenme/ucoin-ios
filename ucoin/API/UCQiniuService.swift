@@ -7,6 +7,7 @@
 //
 
 import Moya
+import Hydra
 
 enum UCQiniuService {
     case tokenProduct(token: String, amount: Int)
@@ -79,130 +80,122 @@ extension UCQiniuService {
     static func getTokenProduct(
         _ token: String,
         _ amount: Int,
-        provider: MoyaProvider<UCQiniuService>,
-        success: ((_ upTokens: [APIQiniu]) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)?) {
-        provider.request(
-            .tokenProduct(token: token, amount: amount)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let upTokens = try response.mapArray(APIQiniu.self)
-                    success?(upTokens)
-                } catch {
+        provider: MoyaProvider<UCQiniuService>) -> Promise<[APIQiniu]> {
+        return Promise<[APIQiniu]> (in: .background, { resolve, reject, _ in
+            provider.request(
+                .tokenProduct(token: token, amount: amount)
+            ){ result in
+                switch result {
+                case let .success(response):
                     do {
-                        let err = try response.mapObject(APIResponse.self)
-                        if let errorCode = err.code {
-                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
-                        } else {
-                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
-                        }
+                        let upTokens = try response.mapArray(APIQiniu.self)
+                        resolve(upTokens)
                     } catch {
-                        failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        do {
+                            let err = try response.mapObject(APIResponse.self)
+                            if let errorCode = err.code {
+                                reject(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                            } else {
+                                reject(UCAPIError.error(code: 0, msg: "未知错误"))
+                            }
+                        } catch {
+                            reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        }
                     }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func getTokenTask(
         _ token: String,
         _ amount: Int,
-        provider: MoyaProvider<UCQiniuService>,
-        success: ((_ upTokens: [APIQiniu]) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)?) {
-        provider.request(
-            .tokenTask(token: token, amount: amount)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let upTokens = try response.mapArray(APIQiniu.self)
-                    success?(upTokens)
-                } catch {
+        provider: MoyaProvider<UCQiniuService>) -> Promise<[APIQiniu]> {
+        return Promise<[APIQiniu]> (in: .background, { resolve, reject, _ in
+            provider.request(
+                .tokenTask(token: token, amount: amount)
+            ){ result in
+                switch result {
+                case let .success(response):
                     do {
-                        let err = try response.mapObject(APIResponse.self)
-                        if let errorCode = err.code {
-                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
-                        } else {
-                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
-                        }
+                        let upTokens = try response.mapArray(APIQiniu.self)
+                        resolve(upTokens)
                     } catch {
-                        failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        do {
+                            let err = try response.mapObject(APIResponse.self)
+                            if let errorCode = err.code {
+                                reject(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                            } else {
+                                reject(UCAPIError.error(code: 0, msg: "未知错误"))
+                            }
+                        } catch {
+                            reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        }
                     }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func getTokenTaskEvidence(
         _ taskId: UInt64,
         _ amount: Int,
-        provider: MoyaProvider<UCQiniuService>,
-        success: ((_ upTokens: [APIQiniu]) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)?) {
-        provider.request(
-            .tokenTaskEvidence(taskId: taskId, amount: amount)
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let upTokens = try response.mapArray(APIQiniu.self)
-                    success?(upTokens)
-                } catch {
+        provider: MoyaProvider<UCQiniuService>) -> Promise<[APIQiniu]> {
+        return Promise<[APIQiniu]> (in: .background, { resolve, reject, _ in
+            provider.request(
+                .tokenTaskEvidence(taskId: taskId, amount: amount)
+            ){ result in
+                switch result {
+                case let .success(response):
                     do {
-                        let err = try response.mapObject(APIResponse.self)
-                        if let errorCode = err.code {
-                            failed?(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
-                        } else {
-                            failed?(UCAPIError.error(code: 0, msg: "未知错误"))
-                        }
+                        let upTokens = try response.mapArray(APIQiniu.self)
+                        resolve(upTokens)
                     } catch {
-                        failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        do {
+                            let err = try response.mapObject(APIResponse.self)
+                            if let errorCode = err.code {
+                                reject(UCAPIError.error(code: errorCode, msg: err.message ?? "未知错误"))
+                            } else {
+                                reject(UCAPIError.error(code: 0, msg: "未知错误"))
+                            }
+                        } catch {
+                            reject(UCAPIError.error(code: response.statusCode, msg: response.description))
+                        }
                     }
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
     
     static func getTokenLogo(
         _ token: String?,
-        provider: MoyaProvider<UCQiniuService>,
-        success: ((_ upToken: APIQiniu) -> Void)?,
-        failed: ((_ error: UCAPIError) -> Void)?,
-        complete: (() -> Void)?) {
-        provider.request(
-            .tokenLogo(token: token ?? "")
-        ){ result in
-            switch result {
-            case let .success(response):
-                do {
-                    let upToken = try response.mapObject(APIQiniu.self)
-                    if let errorCode = upToken.code {
-                        failed?(UCAPIError.error(code: errorCode, msg: upToken.message ?? "未知错误"))
-                    } else {
-                        success?(upToken)
+        provider: MoyaProvider<UCQiniuService>) -> Promise<APIQiniu> {
+        return Promise<APIQiniu> (in: .background, { resolve, reject, _ in
+            provider.request(
+                .tokenLogo(token: token ?? "")
+            ){ result in
+                switch result {
+                case let .success(response):
+                    do {
+                        let upToken = try response.mapObject(APIQiniu.self)
+                        if let errorCode = upToken.code {
+                            reject(UCAPIError.error(code: errorCode, msg: upToken.message ?? "未知错误"))
+                        } else {
+                            resolve(upToken)
+                        }
+                    } catch {
+                        reject(UCAPIError.error(code: response.statusCode, msg: response.description))
                     }
-                } catch {
-                    failed?(UCAPIError.error(code: response.statusCode, msg: response.description))
+                case let .failure(error):
+                    reject(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
                 }
-            case let .failure(error):
-                failed?(UCAPIError.error(code: 0, msg: error.errorDescription ?? "未知错误"))
             }
-            complete?()
-        }
+        })
     }
 }

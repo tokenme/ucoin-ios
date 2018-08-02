@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -70,6 +70,14 @@
                                 <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7Ke-c9-rkm" customClass="LinearActivityIndicatorView" customModule="ucoin" customModuleProvider="target">
+                                <rect key="frame" x="207" y="32.5" width="150" height="5"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="5" id="3hZ-Dq-N5q"/>
+                                    <constraint firstAttribute="width" constant="150" id="biW-FX-OPe"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
@@ -85,7 +93,9 @@
                             <constraint firstItem="c2H-DU-IGl" firstAttribute="leading" secondItem="6hh-kl-VZn" secondAttribute="trailing" constant="5" id="SwY-RJ-CGN"/>
                             <constraint firstAttribute="trailing" secondItem="c2H-DU-IGl" secondAttribute="trailing" constant="8" id="dzb-0W-4zo"/>
                             <constraint firstItem="6hh-kl-VZn" firstAttribute="top" secondItem="JJN-HK-Aeb" secondAttribute="top" constant="5" id="em2-fE-qjU"/>
+                            <constraint firstItem="7Ke-c9-rkm" firstAttribute="trailing" secondItem="c2H-DU-IGl" secondAttribute="trailing" id="n54-5T-AyO"/>
                             <constraint firstItem="tOl-9i-e78" firstAttribute="leading" secondItem="6hh-kl-VZn" secondAttribute="leading" id="pjd-0k-Clb"/>
+                            <constraint firstItem="7Ke-c9-rkm" firstAttribute="top" secondItem="c2H-DU-IGl" secondAttribute="bottom" id="rni-uI-V3B"/>
                             <constraint firstItem="hrr-Ue-DWk" firstAttribute="leading" secondItem="6hh-kl-VZn" secondAttribute="leading" id="ty1-kc-50I"/>
                         </constraints>
                     </view>
@@ -99,6 +109,7 @@
             </tableViewCellContentView>
             <connections>
                 <outlet property="balanceLabel" destination="c2H-DU-IGl" id="l5P-oF-3IX"/>
+                <outlet property="indicator" destination="7Ke-c9-rkm" id="ZRd-rT-FJZ"/>
                 <outlet property="logoImageView" destination="VLQ-Pi-mX4" id="Pq1-o8-ryC"/>
                 <outlet property="nameLabel" destination="hrr-Ue-DWk" id="lRM-qf-989"/>
                 <outlet property="symbolLabel" destination="6hh-kl-VZn" id="rhB-nc-EkW"/>

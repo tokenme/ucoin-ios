@@ -33,8 +33,23 @@ class EditTokenDescriptionViewController: UIViewController {
         super.viewDidLoad()
         self.title = "编辑代币介绍"
         self.transitioningDelegate = self
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
+        }
+        
+        guard let tokenInfo = self.tokenInfo else {
+            return
+        }
+        
+        self.title = tokenInfo.name!
+        
         let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(save))
         self.navigationItem.rightBarButtonItem = saveButton
         
@@ -83,12 +98,20 @@ class EditTokenDescriptionViewController: UIViewController {
         self.view.addSubview(spinner)
         
         textView.becomeFirstResponder()
+        
+        self.view.backgroundColor = UIColor.white
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
         super.viewWillAppear(animated)
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -127,33 +150,25 @@ extension EditTokenDescriptionViewController {
         self.spinner.start()
         UCTokenService.updateToken(
             updateToken,
-            provider: self.tokenServiceProvider,
-            success: {[weak self] token in
-                guard let weakSelf = self else {
-                    return
-                }
-                guard let desc = token.desc else {
-                    return
-                }
-                if let delegate = weakSelf.delegate {
-                    delegate.updatedTokenDescription(desc)
-                }
-                DispatchQueue.main.async {
-                    weakSelf.navigationController?.popViewController(animated: true)
-                }
-            },
-            failed: {error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },
-            complete: { [weak self] in
-                guard let weakSelf = self else {
-                    return
-                }
-                DispatchQueue.main.async {
-                    weakSelf.spinner.stop()
-                }
+            provider: self.tokenServiceProvider)
+        .then(in: .main, {[weak self] token in
+            guard let weakSelf = self else {
+                return
+            }
+            guard let desc = token.desc else {
+                return
+            }
+            if let delegate = weakSelf.delegate {
+                delegate.updatedTokenDescription(desc)
+            }
+            weakSelf.navigationController?.popViewController(animated: true)
+        }).catch(in: .main, {error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: { [weak self] in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.spinner.stop()
         })
     }
 }

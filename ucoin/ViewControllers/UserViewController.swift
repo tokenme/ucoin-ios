@@ -10,10 +10,26 @@ import UIKit
 import SwiftyUserDefaults
 import Moya
 import PullToRefreshKit
+import Hydra
 
 class UserViewController: UITableViewController {
     
-    private var userInfo: APIUser?
+    private var userInfo: APIUser? {
+        didSet {
+            self.userHeaderViewController.userInfo = userInfo
+            if userInfo != nil  && self.navigationItem.rightBarButtonItem == nil {
+                let settingButton = UIBarButtonItem(image: UIImage(named: "Setting")?.withRenderingMode(.alwaysTemplate), style: UIBarButtonItemStyle.plain, target: self, action: #selector(gotoSetting))
+                self.navigationItem.rightBarButtonItem = settingButton
+            } else if userInfo == nil {
+                self.navigationItem.rightBarButtonItem = nil
+                self.ownedTokens = []
+                DispatchQueue.main.async {
+                    self.tableView.reloadDataWithAutoSizingCellWorkAround()
+                }
+            }
+        }
+    }
+    
     private var ownedTokens: [APIToken] = []
     private var sectionsMap: [String] = ["actions", "ownedTokens"]
     
@@ -36,9 +52,17 @@ class UserViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.transitioningDelegate = self
-        self.navigationController?.navigationBar.isTranslucent = true
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
+        }
+        
+        self.extendedLayoutIncludesOpaqueBars = true
         /*
         if !validUser {
             let loginVC = LoginViewController.instantiate()
@@ -59,10 +83,21 @@ class UserViewController: UITableViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.navigationBar.isTranslucent = true
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
+        if let userInfo: DefaultsUser = Defaults[.user] {
+            if CheckValidAccessToken() {
+                self.userInfo = APIUser.init(user: userInfo)
+            } else {
+                self.userInfo = nil
+            }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -88,17 +123,6 @@ class UserViewController: UITableViewController {
         self.tableView.rowHeight = UITableViewAutomaticDimension
         
         self.userHeaderViewController.delegate = self
-        if let userInfo: DefaultsUser = Defaults[.user] {
-            self.userInfo = APIUser.init(user: userInfo)
-            self.userHeaderViewController.setUser(self.userInfo)
-            let settingButton = UIBarButtonItem(image: UIImage(named: "Setting")?.withRenderingMode(.alwaysTemplate), style: UIBarButtonItemStyle.plain, target: self, action: #selector(gotoSetting))
-            self.navigationItem.rightBarButtonItem = settingButton
-        } else if CheckValidAccessToken() {
-            self.getUserInfo(false)
-        } else {
-            self.userHeaderViewController.setUser(nil)
-        }
-        
         self.tableView.tableHeaderView = self.userHeaderViewController.view
         
         self.userHeaderViewController.view.snp.remakeConstraints { [unowned self] (maker) -> Void in
@@ -151,36 +175,25 @@ extension UserViewController {
         
         UCUserService.getUserInfo(
             refresh,
-            provider: self.userServiceProvider,
-            success: {[weak self] user in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.userInfo = user
-                weakSelf.userHeaderViewController.setUser(user)
+            provider: self.userServiceProvider)
+        .then(in: .main, {[weak self] user in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.userInfo = user
+            weakSelf.userHeaderViewController.stopLoadingUserInfo()
+        }).catch(in: .main, {[weak self] error in
+            guard let weakSelf = self else {
+                return
+            }
+            switch error {
+            case UCAPIError.unauthorized:
+                weakSelf.userInfo = nil
                 weakSelf.userHeaderViewController.stopLoadingUserInfo()
-                
-                if weakSelf.navigationItem.rightBarButtonItem == nil {
-                    let settingButton = UIBarButtonItem(image: UIImage(named: "Setting")?.withRenderingMode(.alwaysTemplate), style: UIBarButtonItemStyle.plain, target: weakSelf, action: #selector(weakSelf.gotoSetting))
-                    weakSelf.navigationItem.rightBarButtonItem = settingButton
-                }
-            },
-            failed: {[weak self] error in
-                guard let weakSelf = self else {
-                    return
-                }
-                switch error {
-                case UCAPIError.unauthorized:
-                    weakSelf.userInfo = nil
-                    weakSelf.userHeaderViewController.setUser(nil)
-                    weakSelf.userHeaderViewController.stopLoadingUserInfo()
-                default:
-                    DispatchQueue.main.async {
-                        UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                    }
-                }
-            },
-            complete: {[weak self] in
+            default:
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }
+        }).always(in: .main, body: {[weak self] in
                 guard let weakSelf = self else {
                     return
                 }
@@ -197,36 +210,29 @@ extension UserViewController {
         self.loadingOwnedTokens = true
         
         UCTokenService.getOwnedTokens(
-            provider: self.tokenServiceProvider,
-            success: {[weak self] tokens in
-                guard let weakSelf = self else {
-                    return
-                }
-                weakSelf.ownedTokens = tokens
-            },
-            failed: {[weak self] error in
-                guard let weakSelf = self else {
-                    return
-                }
-                switch error {
-                case UCAPIError.unauthorized:
-                    weakSelf.userInfo = nil
-                    weakSelf.userHeaderViewController.setUser(nil)
-                    weakSelf.userHeaderViewController.stopLoadingUserInfo()
-                default:
-                    DispatchQueue.main.async {
-                        UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                    }
-                }
-            },
-            complete: {[weak self] in
+            provider: self.tokenServiceProvider)
+        .then(in: .main, {[weak self] tokens in
+            guard let weakSelf = self else {
+                return
+            }
+            weakSelf.ownedTokens = tokens
+        }).catch(in: .main, {[weak self] error in
+            guard let weakSelf = self else {
+                return
+            }
+            switch error {
+            case UCAPIError.unauthorized:
+                weakSelf.userInfo = nil
+                weakSelf.userHeaderViewController.stopLoadingUserInfo()
+            default:
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+            }
+        }).always(in: .main, body: {[weak self] in
                 guard let weakSelf = self else {
                     return
                 }
                 weakSelf.loadingOwnedTokens = false
-                DispatchQueue.main.async {
-                    weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
-                }
+                weakSelf.tableView.reloadDataWithAutoSizingCellWorkAround()
                 weakSelf.refreshDone()
             }
         )
@@ -287,11 +293,7 @@ extension UserViewController {
             actionsCell.fill()
             return actionsCell
         case "ownedTokens":
-            if self.loadingOwnedTokens && self.ownedTokens.count == 0 {
-                let actionsCell = tableView.dequeueReusableCell(for: indexPath) as LoadingCell
-                actionsCell.fill()
-                return actionsCell
-            } else if self.ownedTokens.count == 0 {
+            if self.ownedTokens.count == 0 {
                 let actionsCell = tableView.dequeueReusableCell(for: indexPath) as EmptyOwnedTokenCell
                 actionsCell.delegate = self
                 actionsCell.fill(self.loadingOwnedTokens)
@@ -312,6 +314,13 @@ extension UserViewController {
                 break
             }
             let token = self.ownedTokens[indexPath.row]
+            if token.txStatus ?? 0 == 0 {
+                UCAlert.showAlert(imageName: "Warn", title: "警告", desc: "未创建完成，请等待", closeBtn: "关闭")
+                return
+            }else if token.txStatus == -1 {
+                UCAlert.showAlert(imageName: "Error", title: "错误", desc: "创建失败", closeBtn: "关闭")
+                return
+            }
             let tokenVC = TokenViewController.instantiate()
             tokenVC.setToken(token)
             DispatchQueue.main.async {
@@ -333,6 +342,37 @@ extension UserViewController {
             return false
         }
     }
+    
+    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard let navigationController = self.navigationController else {
+            return
+        }
+        statusBarUpdater?.refreshStatusBarStyle()
+        let barHeight = navigationController.navigationBar.bounds.height + 5
+        print ("\(scrollView.contentInset.top), \(scrollView.contentOffset.y)")
+        if  scrollView.contentOffset.y >= 70 - scrollView.contentInset.top && navigationItem.title == nil {
+            navigationItem.title = self.userInfo?.showName
+            navigationController.navigationBar.tintColor = UIColor.primaryBlue
+            navigationController.navigationBar.isTranslucent = false
+            
+            let size = navigationController.navigationBar.frame.size
+            UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.main.scale)
+            let context = UIGraphicsGetCurrentContext()
+            UIColor.dimmedLightBackground.setFill()
+            context?.addRect(CGRect(x: 0, y: 0, width: size.width, height: 1))
+            context?.drawPath(using: .fill)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            navigationController.navigationBar.shadowImage = image
+            
+            self.tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        } else if scrollView.contentOffset.y < 50 &&  navigationItem.title != nil {
+            navigationItem.title = nil
+            navigationController.navigationBar.isTranslucent = true
+            navigationController.navigationBar.shadowImage = UIImage()
+            self.tableView.contentInset = UIEdgeInsets(top: -1 * barHeight, left: 0, bottom: 0, right: 0)
+        }
+    }
 }
 
 extension UserViewController: UIViewControllerTransitioningDelegate {
@@ -348,7 +388,7 @@ extension UserViewController: UIViewControllerTransitioningDelegate {
 }
 
 extension UserViewController: LoginViewDelegate {
-    func loginSucceeded(token: APIAccessToken) {
+    func loginSucceeded(token: APIAccessToken?) {
         self.refresh(false)
     }
 }
@@ -364,26 +404,34 @@ extension UserViewController: UserHeaderViewDelegate {
     
     func logoutSucceeded() {
         self.userInfo = nil
-        self.userHeaderViewController.setUser(nil)
     }
     
     @objc private func gotoSetting() {
-        self.navigationItem.rightBarButtonItem = nil
-        self.userInfo = nil
-        self.userHeaderViewController.setUser(nil)
+        self.logoutSucceeded()
     }
 }
 
 extension UserViewController: UserActionsTableCellDelegate {
     func showCreateToken() {
+        if self.userInfo == nil {
+            self.showLogin()
+            return
+        }
         let vc = CreateTokenViewController.instantiate()
+        vc.delegate = self
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
     
     func showScan() {
-        let vc = CreateTokenViewController.instantiate()
+        let vc = ScanViewController()
+        vc.delegate = self
+        self.present(vc, animated: true, completion: nil)
+    }
+    
+    func showCollect() {
+        let vc = QRCodeCollectViewController.instantiate()
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
         }
@@ -393,5 +441,29 @@ extension UserViewController: UserActionsTableCellDelegate {
 extension UserViewController: CreateTokenViewDelegate {
     func tokenCreated(token: APIToken) {
         self.getOwnedTokens()
+    }
+}
+
+extension UserViewController: ScanViewDelegate {
+    func collectHandler(_ qrcode: APIQRCollect) {
+        UCAlert.showAlert(imageName: "Success", title: "Result", desc: qrcode.toJSONString() ?? "null", closeBtn: "关闭")
+        guard let userInfo = self.userInfo else {
+            return
+        }
+        if userInfo.canPay == 1 {
+            let vc = SetPaymentAmountViewController.instantiate()
+            vc.tokenInfo = qrcode.token
+            vc.amount = qrcode.amount ?? 0
+            vc.collectCode = qrcode
+            self.present(vc, animated: true, completion: nil)
+        } else {
+            let vc = SettingPaymentPasswdViewController.instantiate()
+            DispatchQueue.main.async { [weak self] in
+                guard let weakSelf = self else {
+                    return
+                }
+                weakSelf.present(vc, animated: true, completion: nil)
+            }
+        }
     }
 }

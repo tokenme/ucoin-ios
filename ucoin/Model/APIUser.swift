@@ -16,6 +16,9 @@ public class APIUser: APIResponse {
     var showName: String?
     var avatar: String?
     var wallet: String?
+    var canPay: UInt8?
+    var nick: String?
+    var paymentPasswd: String?
     
     // MARK: JSON
     required public init?(map: Map) {
@@ -30,6 +33,11 @@ public class APIUser: APIResponse {
         self.showName = user.showName
         self.avatar = user.avatar
         self.wallet = user.wallet
+        self.canPay = user.canPay
+    }
+    
+    convenience init?() {
+        self.init(map: Map.init(mappingType: MappingType.fromJSON, JSON: [:]))
     }
     
     // Mappable
@@ -41,5 +49,6 @@ public class APIUser: APIResponse {
         showName <- map["showname"]
         avatar <- map["avatar"]
         wallet <- map["wallet"]
+        canPay <- map["can_pay"]
     }
 }

@@ -29,7 +29,7 @@ final class UserActionsTableCell: UITableViewCell, Reusable {
         scanButton.addTarget(self, action: #selector(showScan), for: .touchUpInside)
         
         let collectButton = setupGeneralButton(imageName: "Collect", title: "收币码")
-        collectButton.addTarget(self, action: #selector(showScan), for: .touchUpInside)
+        collectButton.addTarget(self, action: #selector(showCollect), for: .touchUpInside)
         
         let walletButton = setupGeneralButton(imageName: "Wallet", title: "资产")
         walletButton.addTarget(self, action: #selector(showScan), for: .touchUpInside)
@@ -81,10 +81,15 @@ extension UserActionsTableCell {
     @objc private func showScan() {
         self.delegate?.showScan()
     }
+    
+    @objc private func showCollect() {
+        self.delegate?.showCollect()
+    }
 }
 
 public protocol UserActionsTableCellDelegate: NSObjectProtocol {
     /// Called when the user selects a country from the list.
     func showCreateToken()
     func showScan()
+    func showCollect()
 }

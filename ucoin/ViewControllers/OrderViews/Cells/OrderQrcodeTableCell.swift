@@ -58,7 +58,7 @@ final class OrderQrcodeTableCell: UITableViewCell, Reusable {
         
         txLabel.text = order.tx
         
-        guard let qrcode = order.qrcode?.toJSONString() else {
+        guard let qrcode = order.qrcode else {
             return
         }
         

@@ -8,12 +8,21 @@
 
 import UIKit
 import SwiftyMarkdown
+import SwiftyUserDefaults
 import SnapKit
 
 class ShowTokenDescriptionViewController: UIViewController {
     weak public var delegate: TokenViewDelegate?
     
-    weak public var userInfo: APIUser?
+    private var userInfo: APIUser? {
+        get {
+            if let userInfo: DefaultsUser = Defaults[.user] {
+                return APIUser.init(user: userInfo)
+            }
+            return nil
+        }
+    }
+    
     weak public var tokenInfo: APIToken?
     
     fileprivate var textView  = UITextView()
@@ -29,12 +38,21 @@ class ShowTokenDescriptionViewController: UIViewController {
         super.viewDidLoad()
         self.title = "代币介绍"
         self.transitioningDelegate = self
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.shadowImage = UIImage()
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController.navigationBar.shadowImage = UIImage()
+        }
         
         guard let tokenInfo = self.tokenInfo else {
             return
         }
+        
+        self.title = tokenInfo.name!
         if tokenInfo.isOwnedByUser(wallet: userInfo?.wallet) {
             let editButton = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(showEdit))
             self.navigationItem.rightBarButtonItem = editButton
@@ -56,12 +74,19 @@ class ShowTokenDescriptionViewController: UIViewController {
         if let description = self.tokenInfo?.desc {
             textView.attributedText = SwiftyMarkdown(string: description).attributedString()
         }
+        self.view.backgroundColor = UIColor.white
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
         super.viewWillAppear(animated)
+        if let navigationController = self.navigationController {
+            if #available(iOS 11.0, *) {
+                navigationController.navigationBar.prefersLargeTitles = true
+                self.navigationItem.largeTitleDisplayMode = .automatic;
+            }
+            navigationController.navigationBar.isTranslucent = false
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
     }
     
     override func didReceiveMemoryWarning() {

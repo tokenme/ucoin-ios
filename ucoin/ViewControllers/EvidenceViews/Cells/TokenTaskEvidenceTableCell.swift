@@ -280,20 +280,17 @@ extension TokenTaskEvidenceTableCell {
         UCTokenTaskEvidenceService.approveEvidence(
             evidenceId,
             approveStatus: approveStatus,
-            provider: self.tokenTaskEvidenceServiceProvider,
-            success: {[weak self] evidence in
-                guard let weakSelf = self else {
-                    return
-                }
-                if let delegate = weakSelf.delegate {
-                    delegate.approveEvidence(evidence.id!, approveStatus: evidence.approveStatus!)
-                }
-            },
-            failed: { error in
-                DispatchQueue.main.async {
-                    UCAlert.showAlert(imageName: "Error", title: "错误", desc: error.description, closeBtn: "关闭")
-                }
-        },complete: {[weak self] in
+            provider: self.tokenTaskEvidenceServiceProvider)
+        .then(in: .main, {[weak self] evidence in
+            guard let weakSelf = self else {
+                return
+            }
+            if let delegate = weakSelf.delegate {
+                delegate.approveEvidence(evidence.id!, approveStatus: evidence.approveStatus!)
+            }
+        }).catch(in: .main, { error in
+            UCAlert.showAlert(imageName: "Error", title: "错误", desc: (error as! UCAPIError).description, closeBtn: "关闭")
+        }).always(in: .main, body: {[weak self] in
             guard let weakSelf = self else {
                 return
             }

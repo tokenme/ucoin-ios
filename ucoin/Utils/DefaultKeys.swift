@@ -41,6 +41,7 @@ final class DefaultsUser: Codable, DefaultsSerializable {
     var showName: String!
     var avatar: String!
     var wallet: String!
+    var canPay: UInt8!
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -49,15 +50,17 @@ final class DefaultsUser: Codable, DefaultsSerializable {
         case showName
         case avatar
         case wallet
+        case canPay
     }
     
-    required init(id: UInt64, countryCode: UInt, mobile: String, showName: String, avatar: String, wallet: String) {
+    required init(id: UInt64, countryCode: UInt, mobile: String, showName: String, avatar: String, wallet: String, canPay: UInt8) {
         self.id = id
         self.countryCode = countryCode
         self.mobile = mobile
         self.showName = showName
         self.avatar = avatar
         self.wallet = wallet
+        self.canPay = canPay
     }
     
     required init(from decoder: Decoder) throws {
@@ -68,6 +71,7 @@ final class DefaultsUser: Codable, DefaultsSerializable {
         self.showName = try container.decode(String.self, forKey: .showName)
         self.avatar = try container.decode(String.self, forKey: .avatar)
         self.wallet = try container.decode(String.self, forKey: .wallet)
+        self.canPay = try container.decode(UInt8.self, forKey: .canPay)
     }
     
 }

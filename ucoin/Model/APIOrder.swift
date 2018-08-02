@@ -20,7 +20,7 @@ public class APIOrder: APIResponse {
     var productTxStatus: UInt?
     var insertedTime: Date?
     var updatedTime: Date?
-    var qrcode: APIQrcode?
+    var qrcode: String?
     
     // MARK: JSON
     required public init?(map: Map) {
